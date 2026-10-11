@@ -197,8 +197,8 @@ if [ -n "$PORT_OVERRIDE" ]; then
     export PORT="$PORT_OVERRIDE"
 fi
 
-# export HOST="${HOST:-0.0.0.0}" #This is just for my setup testing
-export HOST="${HOST:-127.0.0.1}"
+export HOST="${HOST:-0.0.0.0}" #This is just for my setup testing
+#export HOST="${HOST:-127.0.0.1}"
 PORT_TO_OPEN="${PORT_OVERRIDE:-${PORT:-3000}}"
 say "Starting the app on ${HOST}:${PORT_TO_OPEN}/"
 say "Press Ctrl+C to stop the server."

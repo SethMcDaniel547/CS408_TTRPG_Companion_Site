@@ -22,8 +22,8 @@ if [[ -z "$HOST" || -z "$KEY" ]]; then
   usage >&2
   exit 2
 fi
-if ! command -v ssh >/dev/null 2>&1 || ! command -v rsync >/dev/null 2>&1 || ! command -v curl >/dev/null 2>&1; then
-  echo "Missing required tools: ssh, rsync, and curl." >&2
+if ! command -v ssh >/dev/null 2>&1 || ! command -v curl >/dev/null 2>&1; then
+  echo "Missing required tools: ssh and curl." >&2
   exit 1
 fi
 if [[ ! -f "$KEY" ]]; then
@@ -43,12 +43,25 @@ else
 fi
 
 echo "Copying application files to ${REMOTE}..."
-rsync -az --delete \
-  --exclude ".git/" \
-  --exclude "node_modules/" \
-  --filter "protect .env" \
-  -e "ssh ${SSH_OPTS[*]}" \
-  "$ROOT_DIR/" "${REMOTE}:/opt/ttrpg-companion/"
+if command -v rsync >/dev/null 2>&1 && rsync --version >/dev/null 2>&1; then
+  rsync -az --delete \
+    --exclude ".git/" \
+    --exclude "node_modules/" \
+    --filter "protect .env" \
+    -e "ssh ${SSH_OPTS[*]}" \
+    "$ROOT_DIR/" "${REMOTE}:/opt/ttrpg-companion/"
+else
+  echo "Local rsync is unavailable or cannot start; using SSH/tar instead."
+  ssh "${SSH_OPTS[@]}" "$REMOTE" \
+    "find /opt/ttrpg-companion -mindepth 1 -maxdepth 1 ! -name .env -exec rm -rf -- {} +"
+  tar -czf - \
+    --exclude=".git" \
+    --exclude="node_modules" \
+    --exclude=".env" \
+    -C "$ROOT_DIR" . |
+    ssh "${SSH_OPTS[@]}" "$REMOTE" \
+      "tar -xzf - -C /opt/ttrpg-companion"
+fi
 
 ssh "${SSH_OPTS[@]}" "$REMOTE" \
   "cd /opt/ttrpg-companion && npm install --omit=dev --no-audit --no-fund && sudo systemctl restart ttrpg-companion.service"

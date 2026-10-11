@@ -1,17 +1,27 @@
 [Unit]
 Description=TTRPG Companion application
-After=network.target
+After=network-online.target postgresql.service
+Wants=network-online.target
 
 [Service]
 Type=simple
-User=ubuntu
+User=ttrpg
+Group=ttrpg
 WorkingDirectory=/opt/ttrpg-companion
 Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
 Environment=PORT=3000
 EnvironmentFile=-/opt/ttrpg-companion/.env
 ExecStart=/usr/bin/node /opt/ttrpg-companion/server.js
-Restart=on-failure
+Restart=always
 RestartSec=5
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/ttrpg-companion
 
 [Install]
 WantedBy=multi-user.target
