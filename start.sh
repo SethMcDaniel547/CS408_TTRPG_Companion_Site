@@ -108,6 +108,12 @@ if [ "$(uname -s)" != "Linux" ]; then
     die "this script requires Linux, the deployment target for this app"
 fi
 
+command -v sudo >/dev/null 2>&1 \
+    || die "sudo is required to install dependencies and start PostgreSQL."
+
+command -v openssl >/dev/null 2>&1 \
+    || die "openssl is required to generate a private local database password."
+
 command -v node >/dev/null 2>&1 \
     || die "Node.js is not installed. Install Node.js ${REQUIRED_NODE_MAJOR} or newer from https://nodejs.org."
 
@@ -118,14 +124,18 @@ fi
 command -v npm >/dev/null 2>&1 \
     || die "npm is not installed. Reinstall Node.js ${REQUIRED_NODE_MAJOR} or newer from https://nodejs.org."
 
+# Automatically install PostgreSQL if missing
+if ! command -v psql >/dev/null 2>&1 || ! command -v pg_isready >/dev/null 2>&1; then
+    say "PostgreSQL is not installed. Installing PostgreSQL..."
+    sudo apt-get update
+    sudo apt-get install -y postgresql postgresql-contrib
+fi
+
 command -v psql >/dev/null 2>&1 \
-    || die "PostgreSQL client is not installed. Install PostgreSQL ${REQUIRED_POSTGRES_MAJOR} or newer."
+    || die "PostgreSQL client installation failed."
 
 command -v pg_isready >/dev/null 2>&1 \
     || die "PostgreSQL tools are incomplete: pg_isready is missing."
-
-command -v sudo >/dev/null 2>&1 \
-    || die "sudo is required to start PostgreSQL and create the local development database."
 
 [ -f package.json ] || die "package.json is missing from $PROJECT_DIR."
 [ -f server.js ] || die "server.js is missing from $PROJECT_DIR."
