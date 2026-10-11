@@ -1,0 +1,17 @@
+[Unit]
+Description=TTRPG Companion application
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/ttrpg-companion
+Environment=NODE_ENV=production
+Environment=PORT=3000
+EnvironmentFile=-/opt/ttrpg-companion/.env
+ExecStart=/usr/bin/node /opt/ttrpg-companion/server.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
