@@ -156,20 +156,22 @@ fi
 pg_isready -h "$DB_HOST" -p "$DB_PORT" >/dev/null 2>&1 \
     || die "PostgreSQL is installed but is not accepting connections on ${DB_HOST}:${DB_PORT}."
 
-sudo -u postgres psql -v ON_ERROR_STOP=1 \
-    --set=db_name="$DB_NAME" \
-    --set=db_user="$DB_USER" \
-    --set=db_password="$DB_PASSWORD" <<'SQL'
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'db_user') THEN
-        EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L', :'db_user', :'db_password');
-    ELSE
-        EXECUTE format('ALTER ROLE %I WITH LOGIN PASSWORD %L', :'db_user', :'db_password');
-    END IF;
-END
-$$;
+if sudo -u postgres psql -v db_user="$DB_USER" -tA <<'SQL' | grep -q 1
+SELECT 1 FROM pg_roles WHERE rolname = :'db_user';
 SQL
+then
+    sudo -u postgres psql -v ON_ERROR_STOP=1 \
+        -v db_user="$DB_USER" \
+        -v db_password="$DB_PASSWORD" <<'SQL'
+ALTER ROLE :"db_user" WITH LOGIN PASSWORD :'db_password';
+SQL
+else
+    sudo -u postgres psql -v ON_ERROR_STOP=1 \
+        -v db_user="$DB_USER" \
+        -v db_password="$DB_PASSWORD" <<'SQL'
+CREATE ROLE :"db_user" LOGIN PASSWORD :'db_password';
+SQL
+fi
 
 if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1; then
     sudo -u postgres createdb -O "$DB_USER" "$DB_NAME"
@@ -195,8 +197,10 @@ if [ -n "$PORT_OVERRIDE" ]; then
     export PORT="$PORT_OVERRIDE"
 fi
 
+# export HOST="${HOST:-0.0.0.0}" #This is just for my setup testing
+export HOST="${HOST:-127.0.0.1}"
 PORT_TO_OPEN="${PORT_OVERRIDE:-${PORT:-3000}}"
-say "Starting the app at http://localhost:${PORT_TO_OPEN}/"
+say "Starting the app on ${HOST}:${PORT_TO_OPEN}/"
 say "Press Ctrl+C to stop the server."
 
 exec node server.js

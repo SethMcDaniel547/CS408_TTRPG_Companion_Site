@@ -38,19 +38,22 @@ fi
 # shellcheck disable=SC1090
 source "$ENV_FILE"
 systemctl enable --now postgresql
-sudo -u postgres psql -v ON_ERROR_STOP=1 \
-  --set=DB_USER="$DB_USER" \
-  --set=DB_PASSWORD="$DB_PASSWORD" <<'SQL'
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'DB_USER') THEN
-        EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L', :'DB_USER', :'DB_PASSWORD');
-    ELSE
-        EXECUTE format('ALTER ROLE %I WITH LOGIN PASSWORD %L', :'DB_USER', :'DB_PASSWORD');
-    END IF;
-END
-$$;
+if sudo -u postgres psql --set=DB_USER="$DB_USER" -tA <<'SQL' | grep -q 1
+SELECT 1 FROM pg_roles WHERE rolname = :'DB_USER';
 SQL
+then
+  sudo -u postgres psql -v ON_ERROR_STOP=1 \
+    --set=DB_USER="$DB_USER" \
+    --set=DB_PASSWORD="$DB_PASSWORD" <<'SQL'
+ALTER ROLE :"DB_USER" WITH LOGIN PASSWORD :'DB_PASSWORD';
+SQL
+else
+  sudo -u postgres psql -v ON_ERROR_STOP=1 \
+    --set=DB_USER="$DB_USER" \
+    --set=DB_PASSWORD="$DB_PASSWORD" <<'SQL'
+CREATE ROLE :"DB_USER" LOGIN PASSWORD :'DB_PASSWORD';
+SQL
+fi
 if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname = '${DB_NAME}'" | grep -q 1; then
   sudo -u postgres createdb -O "$DB_USER" "$DB_NAME"
 fi

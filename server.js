@@ -1,6 +1,7 @@
 const http = require("node:http");
 
 const port = Number.parseInt(process.env.PORT || "3000", 10);
+const host = process.env.HOST || "127.0.0.1";
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
   throw new Error("PORT must be an integer between 1 and 65535");
 }
@@ -20,8 +21,8 @@ const landingPage = `<!doctype html>
   </head>
   <body>
     <main>
-      <h1>Hello, adventurer!</h1>
-      <p>Your TTRPG Companion is online and ready for the next campaign.</p>
+      <h1>IT WORKS!</h1>
+      <p>Finally! This will eventually be the landing page for the ttrpg companion site</p>
     </main>
   </body>
 </html>`;
@@ -43,8 +44,8 @@ const server = http.createServer((request, response) => {
   response.end("Not found\n");
 });
 
-server.listen(port, "127.0.0.1", () => {
-  console.log(`TTRPG Companion listening on http://127.0.0.1:${port}/`);
+server.listen(port, host, () => {
+  console.log(`TTRPG Companion listening on ${host}:${port}`);
 });
 
 function shutdown() {
