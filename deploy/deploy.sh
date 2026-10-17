@@ -37,7 +37,7 @@ SSH_OPTS=(-i "$KEY" -o StrictHostKeyChecking=accept-new)
 
 echo "Checking the application before deployment..."
 if command -v node >/dev/null 2>&1; then
-  node --check "$ROOT_DIR/server.js"
+  node --check "$ROOT_DIR/backend/server.js"
 else
   echo "Node.js is not installed locally; skipping local syntax check."
 fi
@@ -64,7 +64,7 @@ else
 fi
 
 ssh "${SSH_OPTS[@]}" "$REMOTE" \
-  "cd /opt/ttrpg-companion && npm install --omit=dev --no-audit --no-fund && sudo systemctl restart ttrpg-companion.service"
+  "cd /opt/ttrpg-companion && npm install --omit=dev --no-audit --no-fund && sudo install -m 644 deploy/ttrpg-companion.service /etc/systemd/system/ttrpg-companion.service && sudo systemctl daemon-reload && sudo systemctl restart ttrpg-companion.service"
 
 echo "Waiting for the deployed health endpoint..."
 for attempt in {1..12}; do

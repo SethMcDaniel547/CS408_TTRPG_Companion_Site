@@ -138,7 +138,7 @@ command -v pg_isready >/dev/null 2>&1 \
     || die "PostgreSQL tools are incomplete: pg_isready is missing."
 
 [ -f package.json ] || die "package.json is missing from $PROJECT_DIR."
-[ -f server.js ] || die "server.js is missing from $PROJECT_DIR."
+[ -f backend/server.js ] || die "backend/server.js is missing from $PROJECT_DIR."
 
 # --- 2. install project dependencies ---------------------------------------
 
@@ -197,10 +197,10 @@ if [ -n "$PORT_OVERRIDE" ]; then
     export PORT="$PORT_OVERRIDE"
 fi
 
-export HOST="${HOST:-0.0.0.0}" #This is just for my setup testing
-#export HOST="${HOST:-127.0.0.1}"
+#export HOST="${HOST:-0.0.0.0}" #This is just for my setup testing
+export HOST="${HOST:-127.0.0.1}"
 PORT_TO_OPEN="${PORT_OVERRIDE:-${PORT:-3000}}"
 say "Starting the app on ${HOST}:${PORT_TO_OPEN}/"
 say "Press Ctrl+C to stop the server."
 
-exec node server.js
+exec node backend/server.js

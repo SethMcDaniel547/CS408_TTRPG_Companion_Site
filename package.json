@@ -4,8 +4,8 @@
   "private": true,
   "description": "TTRPG Companion landing page",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js",
     "test": "jest"
   },
   "dependencies": {

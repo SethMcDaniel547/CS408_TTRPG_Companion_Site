@@ -12,7 +12,7 @@ Environment=NODE_ENV=production
 Environment=HOST=127.0.0.1
 Environment=PORT=3000
 EnvironmentFile=-/opt/ttrpg-companion/.env
-ExecStart=/usr/bin/node /opt/ttrpg-companion/server.js
+ExecStart=/usr/bin/node /opt/ttrpg-companion/backend/server.js
 Restart=always
 RestartSec=5
 StandardOutput=journal
