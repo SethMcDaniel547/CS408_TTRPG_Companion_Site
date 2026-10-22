@@ -1,5 +1,4 @@
 :root {
-  /*oh theme zone! got like a halloween thing goin but prob going to have more of a doodle aesthetic long term */
   --page-background: #171321;
   --surface-color: #241d33;
   --footer-background: #0d0a13;
@@ -13,80 +12,35 @@
   font: 1.1rem/1.6 system-ui, sans-serif;
 }
 
-body {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  min-height: 100vh;
-}
-
-.site-header {
-  background: var(--surface-color);
-  border-bottom: 0.15rem solid var(--primary-color);
-  padding: 1rem 2rem;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-.home-button {
-  background: var(--primary-color);
-  border-radius: 0.35rem;
-  color: var(--button-text-color);
-  display: inline-block;
-  padding: 0.45rem 1rem;
-  text-decoration: none;
-}
-
-main {
-  flex: 1;
-  margin: 15vh auto 0;
-  max-width: 42rem;
-  padding: 2rem;
-  text-align: center;
-}
-
-h1 {
-  color: var(--primary-color);
-  font-size: clamp(2.5rem, 8vw, 5rem);
-  margin: 0;
-  white-space: nowrap;
-}
-
-p {
-  color: var(--muted-text-color);
-}
-
-button {
-  background: var(--primary-color);
-  border: 0;
-  border-radius: 0.35rem;
-  color: var(--button-text-color);
-  cursor: pointer;
-  font: inherit;
-  margin-top: 1rem;
-  padding: 0.6rem 1.2rem;
-}
-
-button:focus-visible {
-  outline: 0.2rem solid var(--focus-color);
-  outline-offset: 0.2rem;
-}
-
-#sign-in-message {
-  display: none;
-}
-
-.scroll-message {
-  margin-top: 60vh;
-}
-
-.site-footer {
-  background: var(--footer-background);
-  color: var(--muted-text-color);
-  padding: 1.25rem 2rem;
-  position: sticky;
-  bottom: 0;
-  text-align: center;
-  z-index: 1;
-}
+* { box-sizing: border-box; }
+body { display: flex; flex-direction: column; margin: 0; min-height: 100vh; }
+.site-header { align-items: center; background: var(--surface-color); border-bottom: .15rem solid var(--primary-color); display: flex; justify-content: space-between; padding: 1rem 2rem; }
+.brand, .site-nav a { color: var(--text-color); text-decoration: none; }
+.brand { font-weight: 700; }
+.site-nav { align-items: center; display: flex; gap: 1rem; }
+.page-content { flex: 1; margin: 10vh auto 0; max-width: 48rem; padding: 2rem; width: 100%; }
+.view { animation: appear .2s ease-out; text-align: center; }
+.view[hidden] { display: none; }
+.view-home { margin-top: 8vh; }
+.eyebrow { color: var(--primary-color); font-size: .8rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+h1 { font-size: clamp(2.5rem, 8vw, 5rem); line-height: 1.1; margin: .5rem 0 1.5rem; }
+h1 em { color: var(--primary-color); }
+.lead { color: var(--muted-text-color); font-size: 1.25rem; margin: 0 auto; max-width: 38rem; }
+.action-row { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-top: 2rem; }
+.button { background: var(--primary-color); border: 0; border-radius: .35rem; color: var(--button-text-color); cursor: pointer; display: inline-block; font: inherit; padding: .6rem 1.2rem; text-decoration: none; }
+.button-secondary { background: transparent; border: .1rem solid var(--primary-color); color: var(--primary-color); }
+.button-small { padding: .35rem .8rem; }
+.button:disabled { cursor: wait; opacity: .65; }
+.auth-view { margin: 0 auto; max-width: 27rem; }
+.auth-form { display: grid; gap: .5rem; text-align: left; }
+.auth-form label { color: var(--muted-text-color); }
+.auth-form label span { font-size: .85rem; }
+.auth-form input { background: var(--surface-color); border: .1rem solid var(--muted-text-color); border-radius: .25rem; color: var(--text-color); font: inherit; margin-bottom: .75rem; padding: .6rem .75rem; }
+.auth-form .button { margin-top: .5rem; }
+.form-message { color: var(--primary-color); min-height: 1.6em; text-align: center; }
+.form-switch { color: var(--muted-text-color); }
+a { color: var(--primary-color); }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: .2rem solid var(--focus-color); outline-offset: .2rem; }
+.site-footer { background: var(--footer-background); color: var(--muted-text-color); padding: 1.25rem 2rem; text-align: center; }
+@keyframes appear { from { opacity: 0; transform: translateY(.5rem); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 40rem) { .site-header { padding: 1rem; } .page-content { padding: 1rem; } .brand { font-size: .95rem; } }

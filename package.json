@@ -9,6 +9,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "express": "^5.1.0",
     "node": "^26.11.1",
     "pg": "^8.16.3",

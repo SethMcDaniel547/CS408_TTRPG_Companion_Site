@@ -8,24 +8,63 @@
   </head>
   <body>
     <header class="site-header">
-      <a class="home-button" href="/" aria-label="TTRPG Companion home">Home</a>
+      <a class="brand" href="#home" aria-label="TTRPG Companion home">TTRPG Companion</a>
+      <nav class="site-nav" aria-label="Account navigation">
+        <a href="#signin">Sign in</a>
+        <a class="button button-small" href="#signup">Sign up</a>
+      </nav>
     </header>
 
-    <main>
-      <h1>TTRPG Companion</h1>
-      <p>
-        This is a hosting tool for online TTRPG games, this will give your players a chance to have some shenanigans.
-        Things like being able to pass notes to one another and show their character statuses. The idea is that your players
-        should be able to... well <em>play</em>!
-      </p>
+    <main class="page-content">
+      <section id="home" class="view view-home" aria-labelledby="home-title">
+        <p class="eyebrow">Your table, together</p>
+        <h1 id="home-title">Make room for <em>shenanigans.</em></h1>
+        <p class="lead">TTRPG Companion gives your party a shared space for notes, character status, and everything that makes game night yours.</p>
+        <div class="action-row">
+          <a class="button" href="#signup">Create an account</a>
+          <a class="button button-secondary" href="#signin">Sign in</a>
+        </div>
+      </section>
 
-      <p>Also I have no idea what to name it</p>
-      <button id="sign-in-button" type="button">Sign in</button>
-      <p id="sign-in-message" aria-live="polite">Sign in will work in checkpoint 2 :)</p>
-      <p class="scroll-message">This is here to show you can scroll</p>
+      <section id="signin" class="view auth-view" aria-labelledby="signin-title" hidden>
+        <p class="eyebrow">Welcome back</p>
+        <h1 id="signin-title">Sign in</h1>
+        <form class="auth-form" data-auth="signin">
+          <label for="signin-username">Username</label>
+          <input id="signin-username" name="username" autocomplete="username" required minlength="3" maxlength="32">
+          <label for="signin-password">Password</label>
+          <input id="signin-password" name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="128">
+          <button class="button" type="submit">Sign in</button>
+          <p class="form-message" role="status" aria-live="polite"></p>
+        </form>
+        <p class="form-switch">New to the party? <a href="#signup">Create an account</a>.</p>
+      </section>
+
+      <section id="signup" class="view auth-view" aria-labelledby="signup-title" hidden>
+        <p class="eyebrow">Join the party</p>
+        <h1 id="signup-title">Create your account</h1>
+        <form class="auth-form" data-auth="signup">
+          <label for="signup-username">Username</label>
+          <input id="signup-username" name="username" autocomplete="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_]+">
+          <label for="signup-email">Email <span>(optional)</span></label>
+          <input id="signup-email" name="email" type="email" autocomplete="email">
+          <label for="signup-password">Password</label>
+          <input id="signup-password" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="128">
+          <button class="button" type="submit">Sign up</button>
+          <p class="form-message" role="status" aria-live="polite"></p>
+        </form>
+        <p class="form-switch">Already have an account? <a href="#signin">Sign in</a>.</p>
+      </section>
+
+      <section id="account" class="view account-view" aria-labelledby="account-title" hidden>
+        <p class="eyebrow">Party member</p>
+        <h1 id="account-title">Welcome, <span data-username></span>.</h1>
+        <p class="lead">Your companion space is ready for the next adventure.</p>
+        <button class="button button-secondary" type="button" data-signout>Sign out</button>
+      </section>
     </main>
 
-    <footer class="site-footer">Last update on october 16th</footer>
+    <footer class="site-footer">Built for better game nights.</footer>
     <script src="/script.js"></script>
   </body>
 </html>
