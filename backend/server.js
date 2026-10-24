@@ -95,13 +95,22 @@ function createSession(username) {
   return token;
 }
 
-function sessionCookie(token) {
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+function requestUsesHttps(request) {
+  const forwardedProto = request.headers["x-forwarded-proto"];
+  const protocol = typeof forwardedProto === "string"
+    ? forwardedProto.split(",")[0].trim().toLowerCase()
+    : "";
+  return protocol === "https" || Boolean(request.socket.encrypted);
+}
+
+function sessionCookie(token, request) {
+  const secure = requestUsesHttps(request) ? "; Secure" : "";
   return `${sessionCookieName}=${encodeURIComponent(token)}; Max-Age=${sessionDurationMs / 1000}; HttpOnly; SameSite=Lax; Path=/${secure}`;
 }
 
-function clearSessionCookie() {
-  return `${sessionCookieName}=; Max-Age=0; HttpOnly; SameSite=Lax; Path=/`;
+function clearSessionCookie(request) {
+  const secure = requestUsesHttps(request) ? "; Secure" : "";
+  return `${sessionCookieName}=; Max-Age=0; HttpOnly; SameSite=Lax; Path=/${secure}`;
 }
 
 function currentSession(request) {
@@ -158,7 +167,7 @@ async function handleAuth(request, response, pathname) {
     }
 
     const token = createSession(username);
-    sendJson(response, 200, { username }, { "Set-Cookie": sessionCookie(token) });
+    sendJson(response, 200, { username }, { "Set-Cookie": sessionCookie(token, request) });
   } catch (error) {
     console.error("Authentication request failed:", error.message);
     sendJson(response, 503, { error: "Authentication service is temporarily unavailable." });
@@ -183,7 +192,7 @@ async function handleApi(request, response, pathname) {
   if (pathname === "/api/auth/signout" && request.method === "POST") {
     const session = currentSession(request);
     if (session) sessions.delete(session.token);
-    sendJson(response, 200, { authenticated: false }, { "Set-Cookie": clearSessionCookie() });
+    sendJson(response, 200, { authenticated: false }, { "Set-Cookie": clearSessionCookie(request) });
     return true;
   }
   return false;
