@@ -193,7 +193,8 @@ const server = http.createServer(async (request, response) => {
   const requestUrl = new URL(request.url, `http://${request.headers.host || "localhost"}`);
   if (await handleApi(request, response, requestUrl.pathname)) return;
 
-  const relativePath = requestUrl.pathname === "/" ? "/index.html" : requestUrl.pathname;
+  const appRoutes = new Set(["/", "/signin", "/signup", "/account"]);
+  const relativePath = appRoutes.has(requestUrl.pathname) ? "/index.html" : requestUrl.pathname;
   const filePath = path.resolve(frontendDirectory, `.${relativePath}`);
   if (!filePath.startsWith(`${frontendDirectory}${path.sep}`)) {
     response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
