@@ -39,26 +39,31 @@ function setNav(authenticated) {
   document.querySelector("[data-signout]").hidden = !authenticated;
 }
 
+// Clean path-based navigation (no #hash) using the History API.
+function navigate(path) {
+  if (window.location.pathname !== path) window.history.pushState({}, "", path);
+}
+
 async function route() {
   const session = await getSession();
   setNav(session.authenticated);
 
   if (!session.authenticated) {
     currentUsername = null;
-    const requested = window.location.hash.slice(1);
+    const requested = window.location.pathname.slice(1);
     showView(publicViews.includes(requested) ? requested : "home");
     return;
   }
 
   currentUsername = session.username;
   document.querySelector("[data-username]").textContent = session.username;
-  const requested = window.location.hash.slice(1);
+  const requested = window.location.pathname.slice(1);
   const target = appViews.includes(requested) ? requested : "account";
 
   // Views that require a selected room fall back to the lobby when none is set.
   if (["room", "room-settings"].includes(target) && !activeRoom) {
     showView("account");
-    window.location.hash = "account";
+    navigate("/account");
     await loadRooms();
     return;
   }
@@ -146,7 +151,8 @@ async function loadRooms() {
 function openRoom(roomId) {
   activeRoom = roomCache.find((room) => room.id === roomId) || null;
   if (!activeRoom) return;
-  window.location.hash = "room";
+  navigate("/room");
+  route();
 }
 
 /* ---------- Game room (player / GM view) ---------- */
@@ -157,7 +163,8 @@ function applyGmVisibility(isGm) {
 
 function renderRoomView() {
   if (!activeRoom) {
-    window.location.hash = "account";
+    navigate("/account");
+    route();
     return;
   }
   document.querySelector("[data-room-name]").textContent = activeRoom.roomname;
@@ -187,7 +194,7 @@ function memberEntry(member, { removable }) {
 
   if (member.username === currentUsername) {
     const edit = document.createElement("a");
-    edit.href = "#character";
+    edit.href = "/character";
     edit.className = "button button-small button-secondary";
     edit.textContent = "Edit Character";
     actions.appendChild(edit);
@@ -253,7 +260,8 @@ async function removeMember(memberId) {
 
 async function renderRoomSettings() {
   if (!activeRoom || !activeRoom.isGm) {
-    window.location.hash = activeRoom ? "room" : "account";
+    navigate(activeRoom ? "/room" : "/account");
+    route();
     return;
   }
   const list = document.querySelector("[data-settings-member-list]");
@@ -308,7 +316,7 @@ document.querySelectorAll(".auth-form").forEach((form) => {
         method: "POST",
         body: JSON.stringify(data),
       });
-      window.location.hash = "account";
+      navigate("/account");
       await route();
     } catch (error) {
       message.textContent = error.message;
@@ -322,7 +330,7 @@ document.querySelector("[data-signout]").addEventListener("click", async () => {
   await fetch("/api/auth/signout", { method: "POST" });
   activeRoom = null;
   roomCache = [];
-  window.location.hash = "home";
+  navigate("/");
   await route();
 });
 
@@ -434,7 +442,7 @@ document.querySelector("[data-room-delete]").addEventListener("click", async () 
   try {
     await api(`/api/rooms/${activeRoom.id}`, { method: "DELETE" });
     activeRoom = null;
-    window.location.hash = "account";
+    navigate("/account");
     await route();
   } catch (error) {
     message.textContent = error.message;
@@ -452,5 +460,15 @@ document.querySelector("[data-character-form]").addEventListener("submit", (even
 document.querySelector("[data-room-search]").addEventListener("input", renderRoomList);
 document.querySelector("[data-room-sort]").addEventListener("change", renderRoomList);
 
-window.addEventListener("hashchange", route);
+// Intercept in-app link clicks so navigation stays client-side with clean paths.
+document.addEventListener("click", (event) => {
+  const link = event.target.closest("a[href^='/']");
+  if (!link) return;
+  if (link.target === "_blank" || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  navigate(link.getAttribute("href"));
+  route();
+});
+
+window.addEventListener("popstate", route);
 route().catch(() => showView("home"));

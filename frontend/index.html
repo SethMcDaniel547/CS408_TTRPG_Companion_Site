@@ -8,13 +8,13 @@
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="#home" aria-label="TTRPG Companion home">TTRPG Companion</a>
+      <a class="brand" href="/" aria-label="TTRPG Companion home">TTRPG Companion</a>
       <nav class="site-nav" aria-label="Account navigation">
-        <a href="#signin" data-nav-auth>Sign in</a>
-        <a class="button button-small" href="#signup" data-nav-auth>Sign up</a>
-        <a href="#account" data-nav-app hidden>Lobby</a>
-        <a href="#character" data-nav-app hidden>Character</a>
-        <a href="#notes" data-nav-app hidden>Notes</a>
+        <a href="/signin" data-nav-auth>Sign in</a>
+        <a class="button button-small" href="/signup" data-nav-auth>Sign up</a>
+        <a href="/account" data-nav-app hidden>Lobby</a>
+        <a href="/character" data-nav-app hidden>Character</a>
+        <a href="/notes" data-nav-app hidden>Notes</a>
         <button class="button button-small button-secondary" type="button" data-signout hidden>Sign out</button>
       </nav>
     </header>
@@ -23,13 +23,13 @@
       <!-- 1. Landing Page -->
       <section id="home" class="view view-home" aria-labelledby="home-title">
         <div class="hero-banner">
-          <p class="eyebrow">Your table, together</p>
+          <p class="eyebrow">still cant decide on a name</p>
           <h1 id="home-title">TTRPG <em>Companion</em></h1>
           <p class="lead">A shared space for your party: game rooms, character sheets, a collaborative whiteboard, and notes you can pass across the table.</p>
         </div>
         <div class="action-row">
-          <a class="button button-pill" href="#signin">Sign in</a>
-          <a class="button button-pill button-secondary" href="#signup">Create an account</a>
+          <a class="button button-pill" href="/signin">Sign in</a>
+          <a class="button button-pill button-secondary" href="/signup">Create an account</a>
         </div>
       </section>
 
@@ -45,12 +45,12 @@
           <button class="button" type="submit">Sign in</button>
           <p class="form-message" role="status" aria-live="polite"></p>
         </form>
-        <p class="form-switch">New to the party? <a href="#signup">Create an account</a>.</p>
+        <p class="form-switch">New user? <a href="/signup">Create an account</a>.</p>
       </section>
 
       <!-- 2. Account Creation -->
       <section id="signup" class="view auth-view" aria-labelledby="signup-title" hidden>
-        <p class="eyebrow">Join the party</p>
+        <p class="eyebrow"></p>
         <h1 id="signup-title">Create your account</h1>
         <form class="auth-form" data-auth="signup">
           <label for="signup-username">Username</label>
@@ -62,12 +62,11 @@
           <button class="button" type="submit">Sign up</button>
           <p class="form-message" role="status" aria-live="polite"></p>
         </form>
-        <p class="form-switch">Already have an account? <a href="#signin">Sign in</a>.</p>
+        <p class="form-switch">Already have an account? <a href="/signin">Sign in</a>.</p>
       </section>
 
       <!-- 3. Lobby Dashboard -->
       <section id="account" class="view lobby-view" aria-labelledby="account-title" hidden>
-        <p class="eyebrow">Party member</p>
         <h1 id="account-title">Welcome, <span data-username></span>.</h1>
 
         <div class="lobby">
@@ -75,7 +74,7 @@
             <form class="room-form" data-room-create aria-label="Create a game room">
               <h2>Create a room</h2>
               <label for="create-roomname">Room name</label>
-              <input id="create-roomname" name="roomname" required minlength="1" maxlength="64" placeholder="The Lost Mine">
+              <input id="create-roomname" name="roomname" required minlength="1" maxlength="64" placeholder="Room Name">
               <button class="button" type="submit">Create as GM</button>
               <p class="form-message" data-create-message role="status" aria-live="polite"></p>
             </form>
@@ -107,7 +106,7 @@
         </div>
 
         <div class="lobby-footer">
-          <a class="button button-secondary" href="#character">Edit Character</a>
+          <a class="button button-secondary" href="/character">Edit Character</a>
         </div>
       </section>
 
@@ -116,9 +115,9 @@
         <aside class="sidebar" aria-label="Navigation">
           <h2 class="sidebar-title">Menu</h2>
           <nav class="sidebar-nav">
-            <a href="#account">Rooms</a>
-            <a href="#character" aria-current="page">Characters / YourChar</a>
-            <a href="#notes">Notes</a>
+            <a href="/account">Rooms</a>
+            <a href="/character" aria-current="page">Characters / YourChar</a>
+            <a href="/notes">Notes</a>
           </nav>
         </aside>
         <div class="split-main">
@@ -136,7 +135,7 @@
             <textarea id="character-info" name="info" rows="10" placeholder="Background, traits, and custom text..."></textarea>
             <div class="form-actions">
               <button class="button" type="submit">Save character</button>
-              <a href="#notes">Go to notes</a>
+              <a href="/notes">Go to notes</a>
             </div>
             <p class="form-message" data-character-message role="status" aria-live="polite"></p>
           </form>
@@ -192,11 +191,11 @@
 
           <div class="sidebar-box" data-gm-controls hidden>
             <h2>Room settings</h2>
-            <a class="button button-small button-secondary" href="#room-settings">Open settings</a>
+            <a class="button button-small button-secondary" href="/room-settings">Open settings</a>
             <button class="button button-small button-danger" type="button" data-room-delete>Delete room</button>
           </div>
 
-          <a class="button button-small button-secondary" href="#account" data-room-back>Back to lobby</a>
+          <a class="button button-small button-secondary" href="/account" data-room-back>Back to lobby</a>
         </aside>
       </section>
 
@@ -221,9 +220,9 @@
           </div>
           <div class="settings-detail">
             <p class="selected-player" data-selected-player>Select a player to view their character information.</p>
-            <a href="#notes">View notes (shows non-passed notes)</a>
+            <a href="/notes">View notes (shows non-passed notes)</a>
           </div>
-          <a class="button button-small button-secondary" href="#room" data-settings-back>Back to room</a>
+          <a class="button button-small button-secondary" href="/room" data-settings-back>Back to room</a>
         </div>
       </section>
 
@@ -238,13 +237,13 @@
               <summary>Games</summary>
               <details>
                 <summary>Notes</summary>
-                <a href="#notes">note1</a>
+                <a href="/notes">note1</a>
               </details>
             </details>
           </nav>
           <nav class="sidebar-nav">
-            <a href="#account">Rooms</a>
-            <a href="#character">Characters</a>
+            <a href="/account">Rooms</a>
+            <a href="/character">Characters</a>
           </nav>
         </aside>
         <div class="split-main">
@@ -256,7 +255,7 @@
       </section>
     </main>
 
-    <footer class="site-footer">Built for better game nights.</footer>
+    <footer class="site-footer">Making game nights worse since October of 26</footer>
     <script src="/script.js"></script>
   </body>
 </html>
