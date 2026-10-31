@@ -10,22 +10,30 @@
     <header class="site-header">
       <a class="brand" href="#home" aria-label="TTRPG Companion home">TTRPG Companion</a>
       <nav class="site-nav" aria-label="Account navigation">
-        <a href="#signin">Sign in</a>
-        <a class="button button-small" href="#signup">Sign up</a>
+        <a href="#signin" data-nav-auth>Sign in</a>
+        <a class="button button-small" href="#signup" data-nav-auth>Sign up</a>
+        <a href="#account" data-nav-app hidden>Lobby</a>
+        <a href="#character" data-nav-app hidden>Character</a>
+        <a href="#notes" data-nav-app hidden>Notes</a>
+        <button class="button button-small button-secondary" type="button" data-signout hidden>Sign out</button>
       </nav>
     </header>
 
     <main class="page-content">
+      <!-- 1. Landing Page -->
       <section id="home" class="view view-home" aria-labelledby="home-title">
-        <p class="eyebrow">Your table, together</p>
-        <h1 id="home-title">Make room for <em>shenanigans.</em></h1>
-        <p class="lead">TTRPG Companion gives your party a shared space for notes, character status, and everything that makes game night yours.</p>
+        <div class="hero-banner">
+          <p class="eyebrow">Your table, together</p>
+          <h1 id="home-title">TTRPG <em>Companion</em></h1>
+          <p class="lead">A shared space for your party: game rooms, character sheets, a collaborative whiteboard, and notes you can pass across the table.</p>
+        </div>
         <div class="action-row">
-          <a class="button" href="#signup">Create an account</a>
-          <a class="button button-secondary" href="#signin">Sign in</a>
+          <a class="button button-pill" href="#signin">Sign in</a>
+          <a class="button button-pill button-secondary" href="#signup">Create an account</a>
         </div>
       </section>
 
+      <!-- 2. Sign In -->
       <section id="signin" class="view auth-view" aria-labelledby="signin-title" hidden>
         <p class="eyebrow">Welcome back</p>
         <h1 id="signin-title">Sign in</h1>
@@ -40,6 +48,7 @@
         <p class="form-switch">New to the party? <a href="#signup">Create an account</a>.</p>
       </section>
 
+      <!-- 2. Account Creation -->
       <section id="signup" class="view auth-view" aria-labelledby="signup-title" hidden>
         <p class="eyebrow">Join the party</p>
         <h1 id="signup-title">Create your account</h1>
@@ -56,11 +65,194 @@
         <p class="form-switch">Already have an account? <a href="#signin">Sign in</a>.</p>
       </section>
 
-      <section id="account" class="view account-view" aria-labelledby="account-title" hidden>
+      <!-- 3. Lobby Dashboard -->
+      <section id="account" class="view lobby-view" aria-labelledby="account-title" hidden>
         <p class="eyebrow">Party member</p>
         <h1 id="account-title">Welcome, <span data-username></span>.</h1>
-        <p class="lead">Your companion space is ready for the next adventure.</p>
-        <button class="button button-secondary" type="button" data-signout>Sign out</button>
+
+        <div class="lobby">
+          <div class="lobby-forms">
+            <form class="room-form" data-room-create aria-label="Create a game room">
+              <h2>Create a room</h2>
+              <label for="create-roomname">Room name</label>
+              <input id="create-roomname" name="roomname" required minlength="1" maxlength="64" placeholder="The Lost Mine">
+              <button class="button" type="submit">Create as GM</button>
+              <p class="form-message" data-create-message role="status" aria-live="polite"></p>
+            </form>
+
+            <form class="room-form" data-room-join aria-label="Join a game room">
+              <h2>Join a room</h2>
+              <label for="join-code">Room code</label>
+              <input id="join-code" name="roomCode" required minlength="8" maxlength="8" autocapitalize="characters" placeholder="ABCD2345">
+              <button class="button" type="submit">Join</button>
+              <p class="form-message" data-join-message role="status" aria-live="polite"></p>
+            </form>
+          </div>
+
+          <div class="lobby-dashboard">
+            <div class="lobby-controls">
+              <h2>Your rooms</h2>
+              <label class="visually-hidden" for="room-filter">Filter rooms</label>
+              <select id="room-filter" data-room-sort aria-label="Filter rooms">
+                <option value="name">Filter: Name</option>
+                <option value="players">Filter: Player Count</option>
+              </select>
+              <label class="visually-hidden" for="room-search">Search rooms</label>
+              <input id="room-search" type="search" placeholder="Search rooms..." data-room-search>
+            </div>
+            <p class="lobby-note">Shows games only you can see.</p>
+            <p class="form-message" data-rooms-message role="status" aria-live="polite"></p>
+            <ul class="room-list" data-room-list></ul>
+          </div>
+        </div>
+
+        <div class="lobby-footer">
+          <a class="button button-secondary" href="#character">Edit Character</a>
+        </div>
+      </section>
+
+      <!-- 4. Character Customization -->
+      <section id="character" class="view split-view" aria-labelledby="character-title" hidden>
+        <aside class="sidebar" aria-label="Navigation">
+          <h2 class="sidebar-title">Menu</h2>
+          <nav class="sidebar-nav">
+            <a href="#account">Rooms</a>
+            <a href="#character" aria-current="page">Characters / YourChar</a>
+            <a href="#notes">Notes</a>
+          </nav>
+        </aside>
+        <div class="split-main">
+          <div class="split-header">
+            <h1 id="character-title">Character</h1>
+            <div class="token-box" aria-label="Character token">
+              <span class="token-placeholder">Token</span>
+              <input type="file" accept="image/*" data-character-token aria-label="Upload character token">
+            </div>
+          </div>
+          <form class="stacked-form" data-character-form aria-label="Character details">
+            <label for="character-name">Character name</label>
+            <input id="character-name" name="name" maxlength="80" placeholder="Nyx Shadowmoon">
+            <label for="character-info">Character information</label>
+            <textarea id="character-info" name="info" rows="10" placeholder="Background, traits, and custom text..."></textarea>
+            <div class="form-actions">
+              <button class="button" type="submit">Save character</button>
+              <a href="#notes">Go to notes</a>
+            </div>
+            <p class="form-message" data-character-message role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+
+      <!-- 5 & 7. Game Room (Player / GM view) -->
+      <section id="room" class="view split-view room-board-view" aria-labelledby="room-title" hidden>
+        <div class="board-panel">
+          <div class="split-header">
+            <h1 id="room-title"><span data-room-name></span></h1>
+            <p class="room-subtitle"><span data-room-role>Player</span> · <code data-room-code></code></p>
+          </div>
+          <div class="whiteboard" role="img" aria-label="Shared whiteboard canvas">
+            <span class="whiteboard-placeholder">Whiteboard</span>
+          </div>
+          <div class="drawing-tools" data-gm-controls hidden aria-label="Drawing tools">
+            <span class="tools-label">Drawing tools</span>
+            <div class="tool-row">
+              <button class="button button-small button-secondary" type="button" disabled>Pen</button>
+              <button class="button button-small button-secondary" type="button" disabled>Erase</button>
+              <button class="button button-small button-secondary" type="button" disabled>Shape</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="board-sidebar" aria-label="Room tools">
+          <div class="sidebar-box">
+            <div class="sidebar-box-header">
+              <h2>Players &amp; status</h2>
+              <button class="icon-button" type="button" data-member-add-toggle data-gm-controls hidden aria-label="Add player">+</button>
+            </div>
+            <form class="inline-form" data-member-add data-gm-controls hidden aria-label="Add a player">
+              <label class="visually-hidden" for="member-username">Add player by username</label>
+              <input id="member-username" name="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9_]+" placeholder="username">
+              <button class="button button-small" type="submit">Add</button>
+              <p class="form-message" data-member-message role="status" aria-live="polite"></p>
+            </form>
+            <ul class="member-list" data-member-list></ul>
+            <p class="sidebar-help">Edit Character button next to your character takes you to character customization.</p>
+          </div>
+
+          <div class="sidebar-box">
+            <h2>Passing notes</h2>
+            <p class="sidebar-help">Share by clicking Share then a player name in the list.</p>
+            <textarea class="note-input" rows="4" placeholder="Pass a note..." aria-label="Note to pass"></textarea>
+            <div class="tool-row">
+              <button class="icon-button" type="button" aria-label="View notes">&#128196;</button>
+              <button class="icon-button" type="button" aria-label="Save note">&#128190;</button>
+            </div>
+            <p class="sidebar-help">Save by clicking Save and it is added to the notes page.</p>
+          </div>
+
+          <div class="sidebar-box" data-gm-controls hidden>
+            <h2>Room settings</h2>
+            <a class="button button-small button-secondary" href="#room-settings">Open settings</a>
+            <button class="button button-small button-danger" type="button" data-room-delete>Delete room</button>
+          </div>
+
+          <a class="button button-small button-secondary" href="#account" data-room-back>Back to lobby</a>
+        </aside>
+      </section>
+
+      <!-- 8. Game Room Settings (GM) -->
+      <section id="room-settings" class="view split-view" aria-labelledby="room-settings-title" hidden>
+        <aside class="sidebar" aria-label="Players">
+          <h2 class="sidebar-title">Players</h2>
+          <ul class="member-list" data-settings-member-list></ul>
+          <form class="inline-form" data-settings-member-add aria-label="Add a player">
+            <label class="visually-hidden" for="settings-member-username">Add player by username</label>
+            <input id="settings-member-username" name="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9_]+" placeholder="username">
+            <button class="button button-small" type="submit">Add</button>
+          </form>
+          <p class="form-message" data-settings-member-message role="status" aria-live="polite"></p>
+        </aside>
+        <div class="split-main">
+          <div class="split-header">
+            <h1 id="room-settings-title">Room settings</h1>
+            <div class="token-box" aria-label="Character token">
+              <span class="token-placeholder">Token</span>
+            </div>
+          </div>
+          <div class="settings-detail">
+            <p class="selected-player" data-selected-player>Select a player to view their character information.</p>
+            <a href="#notes">View notes (shows non-passed notes)</a>
+          </div>
+          <a class="button button-small button-secondary" href="#room" data-settings-back>Back to room</a>
+        </div>
+      </section>
+
+      <!-- 6. View Notes -->
+      <section id="notes" class="view split-view" aria-labelledby="notes-title" hidden>
+        <aside class="sidebar" aria-label="Notes navigator">
+          <h2 class="sidebar-title">Notes</h2>
+          <label class="visually-hidden" for="notes-search">Search notes</label>
+          <input id="notes-search" type="search" placeholder="Search Notes..." data-notes-search>
+          <nav class="sidebar-nav notes-tree" aria-label="Notes tree">
+            <details open>
+              <summary>Games</summary>
+              <details>
+                <summary>Notes</summary>
+                <a href="#notes">note1</a>
+              </details>
+            </details>
+          </nav>
+          <nav class="sidebar-nav">
+            <a href="#account">Rooms</a>
+            <a href="#character">Characters</a>
+          </nav>
+        </aside>
+        <div class="split-main">
+          <div class="split-header">
+            <h1 id="notes-title">Note</h1>
+          </div>
+          <textarea class="note-pane" rows="16" placeholder="Select a note to read or edit..." aria-label="Note contents"></textarea>
+        </div>
       </section>
     </main>
 
