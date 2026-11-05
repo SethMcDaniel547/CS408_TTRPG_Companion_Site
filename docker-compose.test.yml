@@ -1,0 +1,29 @@
+# Disposable PostgreSQL for repository integration tests (architecture testing
+# rule 2). This database is throwaway: it binds to a non-default host port so it
+# will not collide with a local Postgres, and stores its data on tmpfs so every
+# `up` starts clean and nothing is left on disk afterwards.
+#
+# Usage is documented in documentation/running-tests.md. In short:
+#   npm run db:test:up        start and wait until ready
+#   npm run test:integration  run the repository integration suite
+#   npm run db:test:down      stop and remove the container
+services:
+  test-db:
+    # Pinned to a recent, well-supported major. Match this to whatever the
+    # production RDS/EC2 Postgres runs when that version is confirmed.
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ttrpg_test
+      POSTGRES_PASSWORD: ttrpg_test
+      POSTGRES_DB: ttrpg_companion_test
+    ports:
+      # host 55432 -> container 5432, so a local Postgres on 5432 is undisturbed.
+      - "55432:5432"
+    tmpfs:
+      # Ephemeral data dir: fast, and leaves no state between runs.
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ttrpg_test -d ttrpg_companion_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
