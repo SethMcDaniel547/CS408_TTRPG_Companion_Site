@@ -77,8 +77,9 @@ function createApp({ pool, config, logger = console }) {
     createRoomRouter({ roomController, schemaMiddleware, requireSession }),
   );
 
-  // Static frontend (SPA fallback). Lives after the API routes.
-  const frontendDirectory = path.join(__dirname, "..", "frontend");
+  // Static frontend (SPA fallback). Lives after the API routes. Serves the
+  // Vite build output (frontend/dist); run `npm run build` to generate it.
+  const frontendDirectory = path.join(__dirname, "..", "frontend", "dist");
   app.use(createStaticHandler(frontendDirectory));
 
   // Single global error middleware — maps typed errors to HTTP responses.

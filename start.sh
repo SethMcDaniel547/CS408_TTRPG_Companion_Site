@@ -145,7 +145,17 @@ command -v pg_isready >/dev/null 2>&1 \
 say "Installing project dependencies..."
 npm install --no-audit --no-fund
 
-# --- 3. create application data --------------------------------------------
+# --- 3. build the frontend --------------------------------------------------
+
+# The backend serves the Vite build output (frontend/dist), which is not
+# committed to git. Build it here so a fresh clone works with start.sh alone.
+say "Building the frontend..."
+npm run build
+
+[ -f frontend/dist/index.html ] \
+    || die "Frontend build did not produce frontend/dist/index.html."
+
+# --- 4. create application data --------------------------------------------
 
 say "Checking application initialization..."
 if ! pg_isready -h "$DB_HOST" -p "$DB_PORT" >/dev/null 2>&1; then
@@ -191,7 +201,7 @@ VALUES ('schema_version', '1')
 ON CONFLICT (key) DO NOTHING;
 SQL
 
-# --- 4. start the app -------------------------------------------------------
+# --- 5. start the app -------------------------------------------------------
 
 if [ -n "$PORT_OVERRIDE" ]; then
     export PORT="$PORT_OVERRIDE"

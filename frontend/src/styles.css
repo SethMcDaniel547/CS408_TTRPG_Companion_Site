@@ -125,13 +125,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .site-footer { background: var(--footer-background); color: var(--muted-text-color); padding: 1.25rem 2rem; text-align: center; }
 @keyframes appear { from { opacity: 0; transform: translateY(.5rem); } to { opacity: 1; transform: translateY(0); } }
 
-/* Wider canvas for multi-panel views */
+/* Wider canvas for multi-panel views. The React router sets body[data-wide]
+   for the account/character/room/room-settings/notes routes (see
+   WideLayoutEffect), replacing the old :has(#id:not([hidden])) selectors. */
 @media (min-width: 60rem) {
-  body:has(#account:not([hidden])) .page-content,
-  body:has(#character:not([hidden])) .page-content,
-  body:has(#room:not([hidden])) .page-content,
-  body:has(#room-settings:not([hidden])) .page-content,
-  body:has(#notes:not([hidden])) .page-content { max-width: 72rem; }
+  body[data-wide] .page-content { max-width: 72rem; }
 }
 
 @media (max-width: 52rem) {

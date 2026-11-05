@@ -41,6 +41,17 @@ else
   echo "Node.js is not installed locally; skipping local syntax check."
 fi
 
+echo "Building the frontend (Vite) locally..."
+if command -v npm >/dev/null 2>&1; then
+  # The backend serves frontend/dist in production. Build it here and ship the
+  # output, since Vite is a devDependency and the server install uses
+  # --omit=dev (so it cannot build on the remote host).
+  (cd "$ROOT_DIR" && npm run build)
+else
+  echo "npm is not installed locally; cannot build the frontend." >&2
+  exit 1
+fi
+
 echo "Copying application files to ${REMOTE}..."
 if command -v rsync >/dev/null 2>&1 && rsync --version >/dev/null 2>&1; then
   rsync -az --delete \

@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "node --watch backend/server.js",
+    "dev:frontend": "vite --config frontend/vite.config.js",
+    "build": "vite build --config frontend/vite.config.js",
+    "preview": "vite preview --config frontend/vite.config.js",
     "test": "jest --selectProjects unit",
     "test:integration": "jest --selectProjects integration",
     "test:all": "jest",
@@ -19,6 +22,7 @@
     "pg": "^8.16.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-router-dom": "^7.18.5",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
