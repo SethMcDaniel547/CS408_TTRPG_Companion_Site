@@ -6,12 +6,16 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "node --watch backend/server.js",
-    "test": "jest"
+    "test": "jest --selectProjects unit",
+    "test:integration": "jest --selectProjects integration",
+    "test:all": "jest",
+    "db:test:up": "docker compose -f docker-compose.test.yml up -d --wait",
+    "db:test:down": "docker compose -f docker-compose.test.yml down -v",
+    "test:integration:ci": "npm run db:test:up && npm run test:integration; code=$?; npm run db:test:down; exit $code"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "express": "^5.1.0",
-    "node": "^26.11.1",
     "pg": "^8.16.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

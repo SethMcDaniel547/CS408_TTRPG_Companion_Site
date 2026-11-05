@@ -7,25 +7,9 @@ let roomCache = [];
 let activeRoom = null;
 let currentUsername = null;
 
-async function getSession() {
-  const response = await fetch("/api/auth/me");
-  return response.json();
-}
-
-async function api(url, options = {}) {
-  const response = await fetch(url, {
-    headers: options.body ? { "Content-Type": "application/json" } : undefined,
-    ...options,
-  });
-  let result = {};
-  try {
-    result = await response.json();
-  } catch {
-    result = {};
-  }
-  if (!response.ok) throw new Error(result.error || "Unable to complete that request.");
-  return result;
-}
+// All backend access goes through the shared data layer (window.Api from
+// api.js). View code below never calls fetch directly (frontend rules 1 & 2).
+const Api = window.Api;
 
 function showView(viewId) {
   views.forEach((view) => {
@@ -45,7 +29,7 @@ function navigate(path) {
 }
 
 async function route() {
-  const session = await getSession();
+  const session = await Api.getSession();
   setNav(session.authenticated);
 
   if (!session.authenticated) {
@@ -139,7 +123,7 @@ async function loadRooms() {
   const message = document.querySelector("[data-rooms-message]");
   message.textContent = "Loading rooms...";
   try {
-    const result = await api("/api/rooms");
+    const result = await Api.listRooms();
     roomCache = result.rooms;
     message.textContent = "";
     renderRoomList();
@@ -218,7 +202,7 @@ async function loadMembers(listSelector) {
   if (!list) return;
   list.textContent = "";
   try {
-    const result = await api(`/api/rooms/${activeRoom.id}/members`);
+    const result = await Api.listMembers(activeRoom.id);
     renderMembers(result.members, listSelector, { removable: true });
   } catch (error) {
     document.querySelector("#room [data-member-message]").textContent = error.message;
@@ -248,7 +232,7 @@ function renderMembers(members, listSelector, { removable }) {
 
 async function removeMember(memberId) {
   try {
-    const result = await api(`/api/rooms/${activeRoom.id}/members/${memberId}`, { method: "DELETE" });
+    const result = await Api.removeMember(activeRoom.id, memberId);
     renderMembers(result.members, "[data-member-list]", { removable: true });
     if (!document.getElementById("room-settings").hidden) renderRoomSettings();
   } catch (error) {
@@ -268,7 +252,7 @@ async function renderRoomSettings() {
   list.textContent = "";
   document.querySelector("[data-settings-member-message]").textContent = "";
   try {
-    const result = await api(`/api/rooms/${activeRoom.id}/members`);
+    const result = await Api.listMembers(activeRoom.id);
     if (result.members.length === 0) {
       const empty = document.createElement("li");
       empty.className = "room-empty";
@@ -286,7 +270,7 @@ async function renderRoomSettings() {
         remove.textContent = "Remove";
         remove.addEventListener("click", async () => {
           try {
-            await api(`/api/rooms/${activeRoom.id}/members/${member.id}`, { method: "DELETE" });
+            await Api.removeMember(activeRoom.id, member.id);
             renderRoomSettings();
           } catch (error) {
             document.querySelector("[data-settings-member-message]").textContent = error.message;
@@ -312,10 +296,11 @@ document.querySelectorAll(".auth-form").forEach((form) => {
     message.textContent = "Working...";
     const data = Object.fromEntries(new FormData(form));
     try {
-      await api(`/api/auth/${form.dataset.auth}`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      if (form.dataset.auth === "signup") {
+        await Api.signup(data);
+      } else {
+        await Api.signin(data);
+      }
       navigate("/account");
       await route();
     } catch (error) {
@@ -327,7 +312,7 @@ document.querySelectorAll(".auth-form").forEach((form) => {
 });
 
 document.querySelector("[data-signout]").addEventListener("click", async () => {
-  await fetch("/api/auth/signout", { method: "POST" });
+  await Api.signout();
   activeRoom = null;
   roomCache = [];
   navigate("/");
@@ -344,10 +329,7 @@ document.querySelector("[data-room-create]").addEventListener("submit", async (e
   button.disabled = true;
   message.textContent = "Creating...";
   try {
-    const result = await api("/api/rooms", {
-      method: "POST",
-      body: JSON.stringify({ roomname: form.roomname.value }),
-    });
+    const result = await Api.createRoom(form.roomname.value);
     form.reset();
     message.textContent = `Created “${result.room.roomname}”. Code: ${result.room.roomCode}`;
     await loadRooms();
@@ -366,10 +348,7 @@ document.querySelector("[data-room-join]").addEventListener("submit", async (eve
   button.disabled = true;
   message.textContent = "Joining...";
   try {
-    const result = await api("/api/rooms/join", {
-      method: "POST",
-      body: JSON.stringify({ roomCode: form.roomCode.value }),
-    });
+    const result = await Api.joinRoom(form.roomCode.value);
     form.reset();
     message.textContent = `Joined “${result.room.roomname}”.`;
     await loadRooms();
@@ -399,10 +378,7 @@ document.querySelector("#room [data-member-add]").addEventListener("submit", asy
   button.disabled = true;
   message.textContent = "Adding...";
   try {
-    const result = await api(`/api/rooms/${activeRoom.id}/members`, {
-      method: "POST",
-      body: JSON.stringify({ username: form.username.value }),
-    });
+    const result = await Api.addMember(activeRoom.id, form.username.value);
     form.reset();
     message.textContent = "Player added.";
     renderMembers(result.members, "[data-member-list]", { removable: true });
@@ -422,10 +398,7 @@ document.querySelector("[data-settings-member-add]").addEventListener("submit", 
   button.disabled = true;
   message.textContent = "Adding...";
   try {
-    await api(`/api/rooms/${activeRoom.id}/members`, {
-      method: "POST",
-      body: JSON.stringify({ username: form.username.value }),
-    });
+    await Api.addMember(activeRoom.id, form.username.value);
     form.reset();
     message.textContent = "Player added.";
     renderRoomSettings();
@@ -440,7 +413,7 @@ document.querySelector("[data-room-delete]").addEventListener("click", async () 
   if (!activeRoom) return;
   const message = document.querySelector("#room [data-member-message]");
   try {
-    await api(`/api/rooms/${activeRoom.id}`, { method: "DELETE" });
+    await Api.deleteRoom(activeRoom.id);
     activeRoom = null;
     navigate("/account");
     await route();
