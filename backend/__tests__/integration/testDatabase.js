@@ -19,7 +19,7 @@ function createTestPool() {
 // the foreign keys; RESTART IDENTITY keeps generated ids predictable per test.
 async function resetTables(pool) {
   await pool.query(
-    "TRUNCATE accounts, game_rooms, room_members RESTART IDENTITY CASCADE",
+    "TRUNCATE accounts, game_rooms, room_members, characters RESTART IDENTITY CASCADE",
   );
 }
 

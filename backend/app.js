@@ -8,6 +8,10 @@ const { createSchemaInitializer } = require("./config/database");
 const { AccountRepository } = require("./repositories/AccountRepository");
 const { RoomRepository } = require("./repositories/RoomRepository");
 const { MemberRepository } = require("./repositories/MemberRepository");
+const { CharacterRepository } = require("./repositories/CharacterRepository");
+const { CharacterService } = require("./services/CharacterService");
+const { CharacterController } = require("./controllers/CharacterController");
+const { createCharacterRouter } = require("./routes/characterRoutes");
 const { SessionStore } = require("./services/SessionStore");
 const { AuthService } = require("./services/AuthService");
 const { RoomService } = require("./services/RoomService");
@@ -35,6 +39,7 @@ function createApp({ pool, config, logger = console }) {
   const accountRepo = new AccountRepository(pool);
   const roomRepo = new RoomRepository(pool);
   const memberRepo = new MemberRepository(pool);
+  const characterRepo = new CharacterRepository(pool);
 
   // Services (domain layer) — no HTTP, no SQL.
   const sessionStore = new SessionStore({ durationMs: config.sessionDurationMs });
@@ -44,6 +49,7 @@ function createApp({ pool, config, logger = console }) {
   };
   const authService = new AuthService(accountRepo, crypto, sessionStore);
   const roomService = new RoomService(roomRepo, memberRepo, accountRepo);
+  const characterService = new CharacterService(characterRepo, accountRepo);
 
   // Controllers (HTTP adapters).
   const authController = new AuthController(authService, {
@@ -51,6 +57,7 @@ function createApp({ pool, config, logger = console }) {
     sessionDurationMs: config.sessionDurationMs,
   });
   const roomController = new RoomController(roomService);
+  const characterController = new CharacterController(characterService);
 
   // Middleware.
   const { attachSession, requireSession } = createAuthMiddleware(
@@ -75,6 +82,11 @@ function createApp({ pool, config, logger = console }) {
   app.use(
     "/api/rooms",
     createRoomRouter({ roomController, schemaMiddleware, requireSession }),
+  );
+
+  app.use(
+    "/api/character",
+    createCharacterRouter({ characterController, schemaMiddleware, requireSession }),
   );
 
   // Static frontend (SPA fallback). Lives after the API routes. Serves the

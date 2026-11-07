@@ -101,6 +101,85 @@ describe("rooms require authentication", () => {
   });
 });
 
+describe("character endpoints", () => {
+  const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.from("data")]);
+
+  async function agentWith(extra) {
+    const app = buildApp((text, params) => {
+      if (isSchema(text)) return { rows: [], rowCount: 0 };
+      if (/INSERT INTO accounts/i.test(text)) return { rows: [], rowCount: 1 };
+      if (/SELECT id FROM accounts WHERE username/i.test(text)) return { rows: [{ id: 1 }], rowCount: 1 };
+      return extra ? extra(text, params) : { rows: [], rowCount: 0 };
+    });
+    const agent = request.agent(app);
+    await agent.post("/api/auth/signup").send({ username: "alice", password: "supersecret" });
+    return agent;
+  }
+
+  it("requires a session", async () => {
+    const app = buildApp(() => ({ rows: [], rowCount: 0 }));
+    expect((await request(app).get("/api/character")).status).toBe(401);
+  });
+
+  it("returns an empty character by default", async () => {
+    const agent = await agentWith();
+    const res = await agent.get("/api/character");
+    expect(res.status).toBe(200);
+    expect(res.body.character).toEqual({ name: "", info: "", hasToken: false, tokenUrl: null });
+  });
+
+  it("rejects an empty character name with 400", async () => {
+    const agent = await agentWith();
+    const res = await agent.put("/api/character").send({ name: "  ", info: "" });
+    expect(res.status).toBe(400);
+  });
+
+  it("saves a character", async () => {
+    const agent = await agentWith((text) =>
+      /INSERT INTO characters/i.test(text)
+        ? { rows: [{ name: "Nyx", info: "bio", has_token: false, updated_at: new Date() }], rowCount: 1 }
+        : { rows: [], rowCount: 0 },
+    );
+    const res = await agent.put("/api/character").send({ name: "Nyx", info: "bio" });
+    expect(res.status).toBe(200);
+    expect(res.body.character.name).toBe("Nyx");
+  });
+
+  it("rejects a non-image token upload with 400", async () => {
+    const agent = await agentWith();
+    const res = await agent
+      .put("/api/character/token")
+      .set("Content-Type", "image/png")
+      .send(Buffer.from("not an image"));
+    expect(res.status).toBe(400);
+  });
+
+  it("accepts a PNG token upload", async () => {
+    const agent = await agentWith((text) =>
+      /INSERT INTO characters/i.test(text)
+        ? { rows: [{ name: "", info: "", has_token: true, updated_at: new Date(1) }], rowCount: 1 }
+        : { rows: [], rowCount: 0 },
+    );
+    const res = await agent.put("/api/character/token").set("Content-Type", "image/png").send(PNG);
+    expect(res.status).toBe(200);
+    expect(res.body.character.tokenUrl).toBe("/api/character/token?v=1");
+  });
+
+  it("serves the stored token and 404s when absent", async () => {
+    const withToken = await agentWith((text) =>
+      /SELECT token_data/i.test(text)
+        ? { rows: [{ token_data: PNG, token_type: "image/png" }], rowCount: 1 }
+        : { rows: [], rowCount: 0 },
+    );
+    const ok = await withToken.get("/api/character/token");
+    expect(ok.status).toBe(200);
+    expect(ok.headers["content-type"]).toMatch(/image\/png/);
+
+    const without = await agentWith();
+    expect((await without.get("/api/character/token")).status).toBe(404);
+  });
+});
+
 describe("authenticated room flow", () => {
   // Signs up to obtain a session cookie, then reuses it for a room request.
   async function signedInAgent(handler) {

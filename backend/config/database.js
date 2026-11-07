@@ -48,6 +48,18 @@ function createSchemaInitializer(pool) {
         await pool.query(
           "CREATE INDEX IF NOT EXISTS idx_room_members_account ON room_members (account_id)",
         );
+        // One character per account. The token image is stored inline (small,
+        // size-capped) so it needs no shared filesystem across EC2 instances.
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS characters (
+            account_id INTEGER PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+            name VARCHAR(80) NOT NULL DEFAULT '',
+            info TEXT NOT NULL DEFAULT '',
+            token_data BYTEA,
+            token_type VARCHAR(32),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+          )
+        `);
       })().catch((error) => {
         schemaPromise = undefined;
         throw error;

@@ -65,6 +65,24 @@ export const Api = {
     return request(`/api/rooms/${roomId}`, { method: "DELETE" });
   },
 
+  // Character
+  getCharacter() {
+    return request("/api/character");
+  },
+  saveCharacter({ name, info }) {
+    return request("/api/character", {
+      method: "PUT",
+      body: JSON.stringify({ name, info }),
+    });
+  },
+  uploadCharacterToken(file) {
+    return request("/api/character/token", {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+  },
+
   // Members
   listMembers(roomId) {
     return request(`/api/rooms/${roomId}/members`);
