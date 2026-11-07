@@ -31,7 +31,7 @@ function buildApp(handler) {
 
 // Schema creation issues CREATE TABLE/INDEX statements; treat them as no-ops.
 function isSchema(text) {
-  return /CREATE TABLE|CREATE (UNIQUE )?INDEX/i.test(text);
+  return /CREATE TABLE|CREATE (UNIQUE )?INDEX|ALTER TABLE|^\s*DO \$\$/i.test(text);
 }
 
 describe("GET /api/health", () => {
@@ -103,6 +103,7 @@ describe("rooms require authentication", () => {
 
 describe("character endpoints", () => {
   const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.from("data")]);
+  const row = (extra = {}) => ({ id: 3, name: "Nyx", info: "bio", has_token: false, updated_at: new Date(1), ...extra });
 
   async function agentWith(extra) {
     const app = buildApp((text, params) => {
@@ -118,37 +119,47 @@ describe("character endpoints", () => {
 
   it("requires a session", async () => {
     const app = buildApp(() => ({ rows: [], rowCount: 0 }));
-    expect((await request(app).get("/api/character")).status).toBe(401);
+    expect((await request(app).get("/api/characters")).status).toBe(401);
   });
 
-  it("returns an empty character by default", async () => {
-    const agent = await agentWith();
-    const res = await agent.get("/api/character");
+  it("lists the account's characters", async () => {
+    const agent = await agentWith((text) =>
+      /FROM characters WHERE account_id/i.test(text) ? { rows: [row()], rowCount: 1 } : { rows: [], rowCount: 0 },
+    );
+    const res = await agent.get("/api/characters");
     expect(res.status).toBe(200);
-    expect(res.body.character).toEqual({ name: "", info: "", hasToken: false, tokenUrl: null });
+    expect(res.body.characters).toEqual([
+      { id: 3, name: "Nyx", info: "bio", hasToken: false, tokenUrl: null },
+    ]);
   });
 
   it("rejects an empty character name with 400", async () => {
     const agent = await agentWith();
-    const res = await agent.put("/api/character").send({ name: "  ", info: "" });
+    const res = await agent.post("/api/characters").send({ name: "  ", info: "" });
     expect(res.status).toBe(400);
   });
 
-  it("saves a character", async () => {
-    const agent = await agentWith((text) =>
-      /INSERT INTO characters/i.test(text)
-        ? { rows: [{ name: "Nyx", info: "bio", has_token: false, updated_at: new Date() }], rowCount: 1 }
-        : { rows: [], rowCount: 0 },
-    );
-    const res = await agent.put("/api/character").send({ name: "Nyx", info: "bio" });
-    expect(res.status).toBe(200);
-    expect(res.body.character.name).toBe("Nyx");
+  it("creates a character", async () => {
+    const agent = await agentWith((text) => {
+      if (/COUNT\(\*\)/i.test(text)) return { rows: [{ total: "0" }], rowCount: 1 };
+      if (/INSERT INTO characters/i.test(text)) return { rows: [row()], rowCount: 1 };
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await agent.post("/api/characters").send({ name: "Nyx", info: "bio" });
+    expect(res.status).toBe(201);
+    expect(res.body.character.id).toBe(3);
+  });
+
+  it("404s when updating a character the user does not own", async () => {
+    const agent = await agentWith();
+    const res = await agent.put("/api/characters/99").send({ name: "X", info: "" });
+    expect(res.status).toBe(404);
   });
 
   it("rejects a non-image token upload with 400", async () => {
     const agent = await agentWith();
     const res = await agent
-      .put("/api/character/token")
+      .put("/api/characters/3/token")
       .set("Content-Type", "image/png")
       .send(Buffer.from("not an image"));
     expect(res.status).toBe(400);
@@ -156,30 +167,54 @@ describe("character endpoints", () => {
 
   it("accepts a PNG token upload", async () => {
     const agent = await agentWith((text) =>
-      /INSERT INTO characters/i.test(text)
-        ? { rows: [{ name: "", info: "", has_token: true, updated_at: new Date(1) }], rowCount: 1 }
-        : { rows: [], rowCount: 0 },
+      /UPDATE characters/i.test(text) ? { rows: [row({ has_token: true })], rowCount: 1 } : { rows: [], rowCount: 0 },
     );
-    const res = await agent.put("/api/character/token").set("Content-Type", "image/png").send(PNG);
+    const res = await agent.put("/api/characters/3/token").set("Content-Type", "image/png").send(PNG);
     expect(res.status).toBe(200);
-    expect(res.body.character.tokenUrl).toBe("/api/character/token?v=1");
+    expect(res.body.character.tokenUrl).toBe("/api/characters/3/token?v=1");
   });
 
-  it("serves the stored token and 404s when absent", async () => {
+  it("serves a visible token and 404s otherwise", async () => {
     const withToken = await agentWith((text) =>
-      /SELECT token_data/i.test(text)
+      /SELECT c\.token_data/i.test(text)
         ? { rows: [{ token_data: PNG, token_type: "image/png" }], rowCount: 1 }
         : { rows: [], rowCount: 0 },
     );
-    const ok = await withToken.get("/api/character/token");
+    const ok = await withToken.get("/api/characters/3/token");
     expect(ok.status).toBe(200);
     expect(ok.headers["content-type"]).toMatch(/image\/png/);
 
     const without = await agentWith();
-    expect((await without.get("/api/character/token")).status).toBe(404);
+    expect((await without.get("/api/characters/3/token")).status).toBe(404);
+  });
+
+  it("lists notes and rejects a note without a title", async () => {
+    const agent = await agentWith((text) =>
+      /FROM notes n/i.test(text)
+        ? { rows: [{ id: 1, character_id: 3, title: "Plan", body: "x", updated_at: new Date(1) }], rowCount: 1 }
+        : { rows: [], rowCount: 0 },
+    );
+    const list = await agent.get("/api/notes");
+    expect(list.body.notes[0]).toMatchObject({ id: 1, characterId: 3, title: "Plan" });
+    const bad = await agent.post("/api/notes").send({ characterId: 3, title: "", body: "" });
+    expect(bad.status).toBe(400);
+  });
+
+  it("returns the room roster without usernames", async () => {
+    const agent = await agentWith((text) => {
+      if (/FROM game_rooms WHERE id/i.test(text)) return { rows: [{ id: 5, gm: 1, roomname: "R", room_code: "ABCD2345" }], rowCount: 1 };
+      if (/FROM room_members m/i.test(text)) {
+        return { rows: [{ account_id: 1, character_id: 3, name: "Nyx", has_token: true, updated_at: new Date(1) }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await agent.get("/api/rooms/5/roster");
+    expect(res.status).toBe(200);
+    expect(res.body.players).toEqual([
+      { accountId: 1, isSelf: true, characterId: 3, name: "Nyx", tokenUrl: "/api/characters/3/token?v=1" },
+    ]);
   });
 });
-
 describe("authenticated room flow", () => {
   // Signs up to obtain a session cookie, then reuses it for a room request.
   async function signedInAgent(handler) {

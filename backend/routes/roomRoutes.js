@@ -14,6 +14,9 @@ function createRoomRouter({ roomController, schemaMiddleware, requireSession }) 
   router.post("/", roomController.create);
   router.post("/join", roomController.join);
   router.get("/:roomId/members", roomController.listMembers);
+  router.get("/:roomId/roster", roomController.roster);
+  router.get("/:roomId/members/:memberId/character", roomController.memberCharacter);
+  router.put("/:roomId/character", roomController.selectCharacter);
   router.post("/:roomId/members", roomController.addMember);
   router.delete("/:roomId/members/:memberId", roomController.removeMember);
   router.delete("/:roomId", roomController.remove);

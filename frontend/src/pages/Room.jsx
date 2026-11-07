@@ -1,83 +1,51 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Api } from "../api.js";
-import { useAuth } from "../context/AuthContext.jsx";
 import { useRoom } from "../context/RoomContext.jsx";
-import MemberList from "../components/MemberList.jsx";
+import PlayerGrid from "../components/PlayerGrid.jsx";
 import Whiteboard from "../components/placeholders/Whiteboard.jsx";
 import DrawingTools from "../components/placeholders/DrawingTools.jsx";
 import PassingNotes from "../components/placeholders/PassingNotes.jsx";
 
-// Game room, player + GM view (views 5 & 7). GM-only controls (drawing tools,
-// add-member form, room settings, delete) are shown conditionally, mirroring
-// the old applyGmVisibility(). The roster loads from the backend for the GM;
-// players see a read-only roster containing just themselves (matching the old
-// renderMembersReadonly()).
+// Game room, player + GM view (views 5 & 7). Shows a grid of the characters
+// being played in the room (token, character name, status). Adding and removing
+// players lives in Room settings (GM only). GM-only controls (drawing tools,
+// settings link, delete) are shown conditionally.
 export default function Room() {
   const { activeRoom, clearActiveRoom } = useRoom();
-  const { username } = useAuth();
   const navigate = useNavigate();
 
-  const [members, setMembers] = useState([]);
-  const [memberMessage, setMemberMessage] = useState("");
-  const addInputRef = useRef(null);
+  const [players, setPlayers] = useState([]);
+  const [rosterMessage, setRosterMessage] = useState("");
 
   const isGm = Boolean(activeRoom?.isGm);
 
-  const loadMembers = useCallback(async () => {
+  const loadRoster = useCallback(async () => {
     if (!activeRoom) return;
-    setMemberMessage("");
     try {
-      const result = await Api.listMembers(activeRoom.id);
-      setMembers(result.members);
+      const result = await Api.getRoster(activeRoom.id);
+      setPlayers(result.players);
+      setRosterMessage("");
     } catch (error) {
-      setMemberMessage(error.message);
+      setRosterMessage(error.message);
     }
   }, [activeRoom]);
 
+  // Load the roster, then keep it fresh so joins and character changes appear.
   useEffect(() => {
-    if (!activeRoom) return;
-    if (isGm) {
-      loadMembers();
-    } else {
-      // Players still see themselves with the Edit Character shortcut.
-      setMembers([{ id: -1, username }]);
-    }
-  }, [activeRoom, isGm, loadMembers, username]);
-
-  async function handleAddMember(event) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    if (!activeRoom) return;
-    setMemberMessage("Adding...");
-    try {
-      const result = await Api.addMember(activeRoom.id, form.username.value);
-      form.reset();
-      setMemberMessage("Player added.");
-      setMembers(result.members);
-    } catch (error) {
-      setMemberMessage(error.message);
-    }
-  }
-
-  async function handleRemoveMember(memberId) {
-    if (!activeRoom) return;
-    try {
-      const result = await Api.removeMember(activeRoom.id, memberId);
-      setMembers(result.members);
-    } catch (error) {
-      setMemberMessage(error.message);
-    }
-  }
+    loadRoster();
+    const timer = setInterval(loadRoster, 10000);
+    return () => clearInterval(timer);
+  }, [loadRoster]);
 
   async function handleDeleteRoom() {
     if (!activeRoom) return;
     try {
       await Api.deleteRoom(activeRoom.id);
       clearActiveRoom();
-      navigate("/account");
+      navigate("/lobby");
     } catch (error) {
-      setMemberMessage(error.message);
+      setRosterMessage(error.message);
     }
   }
 
@@ -91,7 +59,13 @@ export default function Room() {
             <span>{activeRoom.roomname}</span>
           </h1>
           <p className="room-subtitle">
-            <span>{isGm ? "Game Master" : "Player"}</span> · <code>{activeRoom.roomCode}</code>
+            <span>{isGm ? "Game Master" : "Player"}</span>
+            {isGm && (
+              <>
+                {" · "}
+                <code>{activeRoom.roomCode}</code>
+              </>
+            )}
           </p>
         </div>
         <Whiteboard />
@@ -100,57 +74,18 @@ export default function Room() {
 
       <aside className="board-sidebar" aria-label="Room tools">
         <div className="sidebar-box">
-          <div className="sidebar-box-header">
-            <h2>Players &amp; status</h2>
-            {isGm && (
-              <button
-                className="icon-button"
-                type="button"
-                aria-label="Add player"
-                onClick={() => addInputRef.current?.focus()}
-              >
-                +
-              </button>
-            )}
-          </div>
-          {isGm && (
-            <form className="inline-form" onSubmit={handleAddMember} aria-label="Add a player">
-              <label className="visually-hidden" htmlFor="member-username">
-                Add player by username
-              </label>
-              <input
-                id="member-username"
-                name="username"
-                ref={addInputRef}
-                minLength={3}
-                maxLength={32}
-                pattern="[A-Za-z0-9_]+"
-                placeholder="username"
-              />
-              <button className="button button-small" type="submit">
-                Add
-              </button>
-            </form>
-          )}
-          <MemberList
-            members={members}
-            currentUsername={username}
-            removable={isGm}
-            onRemove={handleRemoveMember}
-          />
+          <h2>Players</h2>
+          <PlayerGrid players={players} />
           <p className="form-message" role="status" aria-live="polite">
-            {memberMessage}
-          </p>
-          <p className="sidebar-help">
-            Edit Character button next to your character takes you to character customization.
+            {rosterMessage}
           </p>
         </div>
-
         <PassingNotes />
 
         {isGm && (
           <div className="sidebar-box">
             <h2>Room settings</h2>
+            <p className="sidebar-help">Add or remove players in settings.</p>
             <Link className="button button-small button-secondary" to="/room-settings">
               Open settings
             </Link>
@@ -164,10 +99,11 @@ export default function Room() {
           </div>
         )}
 
-        <Link className="button button-small button-secondary" to="/account">
+        <Link className="button button-small button-secondary" to="/lobby">
           Back to lobby
         </Link>
       </aside>
     </section>
   );
 }
+

@@ -65,24 +65,66 @@ export const Api = {
     return request(`/api/rooms/${roomId}`, { method: "DELETE" });
   },
 
-  // Character
-  getCharacter() {
-    return request("/api/character");
+  // Characters
+  listCharacters() {
+    return request("/api/characters");
   },
-  saveCharacter({ name, info }) {
-    return request("/api/character", {
+  createCharacter({ name, info }) {
+    return request("/api/characters", {
+      method: "POST",
+      body: JSON.stringify({ name, info }),
+    });
+  },
+  updateCharacter(id, { name, info }) {
+    return request(`/api/characters/${id}`, {
       method: "PUT",
       body: JSON.stringify({ name, info }),
     });
   },
-  uploadCharacterToken(file) {
-    return request("/api/character/token", {
+  deleteCharacter(id) {
+    return request(`/api/characters/${id}`, { method: "DELETE" });
+  },
+  uploadCharacterToken(id, file) {
+    return request(`/api/characters/${id}/token`, {
       method: "PUT",
       headers: { "Content-Type": file.type },
       body: file,
     });
   },
 
+  // Notes
+  listNotes() {
+    return request("/api/notes");
+  },
+  createNote({ characterId, title, body }) {
+    return request("/api/notes", {
+      method: "POST",
+      body: JSON.stringify({ characterId, title, body }),
+    });
+  },
+  updateNote(id, { title, body }) {
+    return request(`/api/notes/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ title, body }),
+    });
+  },
+  deleteNote(id) {
+    return request(`/api/notes/${id}`, { method: "DELETE" });
+  },
+
+  // Room roster / character selection
+  getMemberCharacter(roomId, memberId) {
+    return request(`/api/rooms/${roomId}/members/${memberId}/character`);
+  },
+  getRoster(roomId) {
+    return request(`/api/rooms/${roomId}/roster`);
+  },
+  selectRoomCharacter(roomId, characterId) {
+    return request(`/api/rooms/${roomId}/character`, {
+      method: "PUT",
+      body: JSON.stringify({ characterId }),
+    });
+  },
   // Members
   listMembers(roomId) {
     return request(`/api/rooms/${roomId}/members`);

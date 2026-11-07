@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useRoom } from "../context/RoomContext.jsx";
 
@@ -30,8 +30,8 @@ export default function SiteHeader() {
         )}
         {authenticated && (
           <>
-            <Link to="/account">Lobby</Link>
-            <Link to="/character">Character</Link>
+            <Link to="/lobby">Lobby</Link>
+            <Link to="/characters">Characters</Link>
             <Link to="/notes">Notes</Link>
             <button
               className="button button-small button-secondary"
@@ -46,3 +46,4 @@ export default function SiteHeader() {
     </header>
   );
 }
+

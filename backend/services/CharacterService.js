@@ -2,7 +2,9 @@
 
 const { AppError } = require("../errors/AppError");
 
-// Business rules for a player's character. No req/res, no SQL.
+const MAX_CHARACTERS_PER_ACCOUNT = 25;
+
+// Business rules for a player's characters. No req/res, no SQL.
 class CharacterService {
   constructor(characterRepo, accountRepo) {
     this.characterRepo = characterRepo;
@@ -17,39 +19,54 @@ class CharacterService {
     return accountId;
   }
 
-  // A player who has not saved anything yet gets an empty character, not a 404.
+  static tokenUrl(characterId, updatedAt) {
+    return `/api/characters/${characterId}/token?v=${new Date(updatedAt).getTime()}`;
+  }
+
   static view(row) {
-    if (!row) {
-      return { name: "", info: "", hasToken: false, tokenUrl: null };
-    }
-    const version = new Date(row.updated_at).getTime();
     return {
+      id: row.id,
       name: row.name,
       info: row.info,
       hasToken: row.has_token,
-      tokenUrl: row.has_token ? `/api/character/token?v=${version}` : null,
+      tokenUrl: row.has_token ? CharacterService.tokenUrl(row.id, row.updated_at) : null,
     };
   }
 
-  async getCharacter(accountId) {
-    return CharacterService.view(await this.characterRepo.findByAccount(accountId));
+  async list(accountId) {
+    const rows = await this.characterRepo.listByAccount(accountId);
+    return rows.map(CharacterService.view);
   }
 
-  async saveCharacter(accountId, { name, info }) {
-    const row = await this.characterRepo.upsert({ accountId, name, info });
-    return CharacterService.view(row);
-  }
-
-  async saveToken(accountId, { data, contentType }) {
-    const row = await this.characterRepo.setToken({ accountId, data, contentType });
-    return CharacterService.view(row);
-  }
-
-  async getToken(accountId) {
-    const token = await this.characterRepo.getToken(accountId);
-    if (!token) {
-      throw new AppError("No token has been uploaded.", 404);
+  async create(accountId, { name, info }) {
+    if ((await this.characterRepo.countByAccount(accountId)) >= MAX_CHARACTERS_PER_ACCOUNT) {
+      throw new AppError(`You can have at most ${MAX_CHARACTERS_PER_ACCOUNT} characters.`, 400);
     }
+    const row = await this.characterRepo.create({ accountId, name, info });
+    return CharacterService.view(row);
+  }
+
+  async update(accountId, id, { name, info }) {
+    const row = await this.characterRepo.update({ id, accountId, name, info });
+    if (!row) throw new AppError("Character not found.", 404);
+    return CharacterService.view(row);
+  }
+
+  async remove(accountId, id) {
+    if (!(await this.characterRepo.deleteOwned(id, accountId))) {
+      throw new AppError("Character not found.", 404);
+    }
+  }
+
+  async saveToken(accountId, id, { data, contentType }) {
+    const row = await this.characterRepo.setToken({ id, accountId, data, contentType });
+    if (!row) throw new AppError("Character not found.", 404);
+    return CharacterService.view(row);
+  }
+
+  async getToken(viewerId, id) {
+    const token = await this.characterRepo.getTokenForViewer(id, viewerId);
+    if (!token) throw new AppError("No token available.", 404);
     return token;
   }
 }

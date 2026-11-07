@@ -12,6 +12,10 @@ const { CharacterRepository } = require("./repositories/CharacterRepository");
 const { CharacterService } = require("./services/CharacterService");
 const { CharacterController } = require("./controllers/CharacterController");
 const { createCharacterRouter } = require("./routes/characterRoutes");
+const { NoteRepository } = require("./repositories/NoteRepository");
+const { NoteService } = require("./services/NoteService");
+const { NoteController } = require("./controllers/NoteController");
+const { createNoteRouter } = require("./routes/noteRoutes");
 const { SessionStore } = require("./services/SessionStore");
 const { AuthService } = require("./services/AuthService");
 const { RoomService } = require("./services/RoomService");
@@ -40,6 +44,7 @@ function createApp({ pool, config, logger = console }) {
   const roomRepo = new RoomRepository(pool);
   const memberRepo = new MemberRepository(pool);
   const characterRepo = new CharacterRepository(pool);
+  const noteRepo = new NoteRepository(pool);
 
   // Services (domain layer) — no HTTP, no SQL.
   const sessionStore = new SessionStore({ durationMs: config.sessionDurationMs });
@@ -48,8 +53,9 @@ function createApp({ pool, config, logger = console }) {
     compare: (value, hash) => bcrypt.compare(value, hash),
   };
   const authService = new AuthService(accountRepo, crypto, sessionStore);
-  const roomService = new RoomService(roomRepo, memberRepo, accountRepo);
+  const roomService = new RoomService(roomRepo, memberRepo, accountRepo, characterRepo, noteRepo);
   const characterService = new CharacterService(characterRepo, accountRepo);
+  const noteService = new NoteService(noteRepo, characterRepo, accountRepo);
 
   // Controllers (HTTP adapters).
   const authController = new AuthController(authService, {
@@ -58,6 +64,7 @@ function createApp({ pool, config, logger = console }) {
   });
   const roomController = new RoomController(roomService);
   const characterController = new CharacterController(characterService);
+  const noteController = new NoteController(noteService);
 
   // Middleware.
   const { attachSession, requireSession } = createAuthMiddleware(
@@ -85,8 +92,13 @@ function createApp({ pool, config, logger = console }) {
   );
 
   app.use(
-    "/api/character",
+    "/api/characters",
     createCharacterRouter({ characterController, schemaMiddleware, requireSession }),
+  );
+
+  app.use(
+    "/api/notes",
+    createNoteRouter({ noteController, schemaMiddleware, requireSession }),
   );
 
   // Static frontend (SPA fallback). Lives after the API routes. Serves the

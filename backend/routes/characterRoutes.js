@@ -11,11 +11,13 @@ function createCharacterRouter({ characterController, schemaMiddleware, requireS
 
   router.use(requireSession, schemaMiddleware);
 
-  router.get("/", characterController.get);
-  router.put("/", characterController.save);
-  router.get("/token", characterController.getToken);
+  router.get("/", characterController.list);
+  router.post("/", characterController.create);
+  router.put("/:characterId", characterController.update);
+  router.delete("/:characterId", characterController.remove);
+  router.get("/:characterId/token", characterController.getToken);
   router.put(
-    "/token",
+    "/:characterId/token",
     express.raw({ type: "image/*", limit: TOKEN_MAX_BYTES }),
     characterController.uploadToken,
   );

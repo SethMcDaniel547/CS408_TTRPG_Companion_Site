@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Api } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useRoom } from "../context/RoomContext.jsx";
+import { useCharacters } from "../context/CharacterContext.jsx";
 
 // Lobby dashboard (view 3). Owns the room list (the old `roomCache` global),
 // with client-side search + sort, plus the create/join forms. Opening a room
@@ -11,6 +12,7 @@ export default function Lobby() {
   const { username } = useAuth();
   const { setActiveRoom, clearActiveRoom } = useRoom();
   const navigate = useNavigate();
+  const { activeCharacter, loading: charactersLoading } = useCharacters();
 
   const [rooms, setRooms] = useState([]);
   const [roomsMessage, setRoomsMessage] = useState("");
@@ -34,7 +36,7 @@ export default function Lobby() {
   }, []);
 
   // Entering the lobby clears any active room (matches the old route()
-  // behavior of resetting activeRoom when target === "account").
+  // behavior of resetting activeRoom when target === "lobby").
   useEffect(() => {
     clearActiveRoom();
     loadRooms();
@@ -55,9 +57,24 @@ export default function Lobby() {
     return sorted;
   }, [rooms, search, sortMode]);
 
-  function openRoom(roomId) {
+  // Entering a room as a player records which character they are playing, so
+  // everyone in the room sees that character in the player grid. The GM does
+  // not play a character.
+  async function openRoom(roomId) {
     const room = rooms.find((item) => item.id === roomId) || null;
     if (!room) return;
+    if (!room.isGm) {
+      if (!activeCharacter) {
+        setRoomsMessage("Create a character first to join a room as a player.");
+        return;
+      }
+      try {
+        await Api.selectRoomCharacter(room.id, activeCharacter.id);
+      } catch (error) {
+        setRoomsMessage(error.message);
+        return;
+      }
+    }
     setActiveRoom(room);
     navigate("/room");
   }
@@ -70,7 +87,7 @@ export default function Lobby() {
     try {
       const result = await Api.createRoom(form.roomname.value);
       form.reset();
-      setCreateMessage(`Created “${result.room.roomname}”. Code: ${result.room.roomCode}`);
+      setCreateMessage(`Created "${result.room.roomname}". Code: ${result.room.roomCode}`);
       await loadRooms();
     } catch (error) {
       setCreateMessage(error.message);
@@ -87,7 +104,7 @@ export default function Lobby() {
     try {
       const result = await Api.joinRoom(form.roomCode.value);
       form.reset();
-      setJoinMessage(`Joined “${result.room.roomname}”.`);
+      setJoinMessage(`Joined "${result.room.roomname}".`);
       await loadRooms();
     } catch (error) {
       setJoinMessage(error.message);
@@ -103,47 +120,6 @@ export default function Lobby() {
       </h1>
 
       <div className="lobby">
-        <div className="lobby-forms">
-          <form className="room-form" onSubmit={handleCreate} aria-label="Create a game room">
-            <h2>Create a room</h2>
-            <label htmlFor="create-roomname">Room name</label>
-            <input
-              id="create-roomname"
-              name="roomname"
-              required
-              minLength={1}
-              maxLength={64}
-              placeholder="Room Name"
-            />
-            <button className="button" type="submit" disabled={creating}>
-              Create as GM
-            </button>
-            <p className="form-message" role="status" aria-live="polite">
-              {createMessage}
-            </p>
-          </form>
-
-          <form className="room-form" onSubmit={handleJoin} aria-label="Join a game room">
-            <h2>Join a room</h2>
-            <label htmlFor="join-code">Room code</label>
-            <input
-              id="join-code"
-              name="roomCode"
-              required
-              minLength={8}
-              maxLength={8}
-              autoCapitalize="characters"
-              placeholder="ABCD2345"
-            />
-            <button className="button" type="submit" disabled={joining}>
-              Join
-            </button>
-            <p className="form-message" role="status" aria-live="polite">
-              {joinMessage}
-            </p>
-          </form>
-        </div>
-
         <div className="lobby-dashboard">
           <div className="lobby-controls">
             <h2>Your rooms</h2>
@@ -204,11 +180,56 @@ export default function Lobby() {
             )}
           </ul>
         </div>
+
+        <div className="lobby-forms">
+          <form className="room-form" onSubmit={handleCreate} aria-label="Create a game room">
+            <h2>Create a room</h2>
+            <label htmlFor="create-roomname">Room name</label>
+            <input
+              id="create-roomname"
+              name="roomname"
+              required
+              minLength={1}
+              maxLength={64}
+              placeholder="Room Name"
+            />
+            <button className="button" type="submit" disabled={creating}>
+              Create as GM
+            </button>
+            <p className="form-message" role="status" aria-live="polite">
+              {createMessage}
+            </p>
+          </form>
+
+          <form className="room-form" onSubmit={handleJoin} aria-label="Join a game room">
+            <h2>Join a room</h2>
+            <label htmlFor="join-code">Room code</label>
+            <input
+              id="join-code"
+              name="roomCode"
+              required
+              minLength={8}
+              maxLength={8}
+              autoCapitalize="characters"
+              placeholder="ABCD2345"
+            />
+            <button className="button" type="submit" disabled={joining}>
+              Join
+            </button>
+            <p className="form-message" role="status" aria-live="polite">
+              {joinMessage}
+            </p>
+          </form>
+        </div>
       </div>
 
       <div className="lobby-footer">
-        <Link className="button button-secondary" to="/character">
-          Edit Character
+        <Link className="button button-secondary" to="/characters">
+          {charactersLoading
+            ? "Characters"
+            : activeCharacter
+              ? `Playing as: ${activeCharacter.name || "Unnamed"}`
+              : "Create a character"}
         </Link>
       </div>
     </section>

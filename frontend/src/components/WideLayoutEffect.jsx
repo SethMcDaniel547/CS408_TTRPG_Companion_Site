@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 // The original stylesheet widened .page-content for the multi-panel views using
@@ -7,8 +7,8 @@ import { useLocation } from "react-router-dom";
 // longer match. This effect sets `data-wide` on <body> for the same set of
 // routes, and styles.css widens the content for `body[data-wide]`.
 const WIDE_ROUTES = new Set([
-  "/account",
-  "/character",
+  "/lobby",
+  "/characters",
   "/room",
   "/room-settings",
   "/notes",
@@ -27,3 +27,4 @@ export default function WideLayoutEffect() {
 
   return null;
 }
+

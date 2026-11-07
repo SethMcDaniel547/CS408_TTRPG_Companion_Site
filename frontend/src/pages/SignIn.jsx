@@ -1,10 +1,10 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Api } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 // Sign in (view 2). Mirrors the old .auth-form submit handler: disable the
-// button, post credentials via Api, refresh the session, then route to /account.
+// button, post credentials via Api, refresh the session, then route to /lobby.
 export default function SignIn() {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -19,7 +19,7 @@ export default function SignIn() {
     try {
       await Api.signin(data);
       await refresh();
-      navigate("/account");
+      navigate("/lobby");
     } catch (error) {
       setMessage(error.message);
     } finally {
@@ -64,3 +64,4 @@ export default function SignIn() {
     </section>
   );
 }
+

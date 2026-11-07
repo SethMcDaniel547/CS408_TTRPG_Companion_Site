@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from "react-router-dom";
+﻿import { Navigate, Outlet } from "react-router-dom";
 import { useRoom } from "../context/RoomContext.jsx";
 
 // Guard for views that require a selected room (/room and /room-settings).
@@ -7,7 +7,8 @@ import { useRoom } from "../context/RoomContext.jsx";
 export default function RequireRoom({ gmOnly = false }) {
   const { activeRoom } = useRoom();
 
-  if (!activeRoom) return <Navigate to="/account" replace />;
+  if (!activeRoom) return <Navigate to="/lobby" replace />;
   if (gmOnly && !activeRoom.isGm) return <Navigate to="/room" replace />;
   return <Outlet />;
 }
+

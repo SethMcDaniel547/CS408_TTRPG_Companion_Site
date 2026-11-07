@@ -61,6 +61,44 @@ class RoomController {
     }
   };
 
+  roster = async (req, res, next) => {
+    this.setServiceErrorMessage(res);
+    try {
+      const accountId = await this.accountId(req);
+      const roomId = validateId(req.params.roomId, "room id");
+      const players = await this.roomService.getRoster(roomId, accountId);
+      res.status(200).json({ players });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  selectCharacter = async (req, res, next) => {
+    this.setServiceErrorMessage(res);
+    try {
+      const accountId = await this.accountId(req);
+      const roomId = validateId(req.params.roomId, "room id");
+      const characterId = validateId(req.body.characterId, "character id");
+      await this.roomService.selectCharacter(roomId, accountId, characterId);
+      res.status(200).json({ selected: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  memberCharacter = async (req, res, next) => {
+    this.setServiceErrorMessage(res);
+    try {
+      const accountId = await this.accountId(req);
+      const roomId = validateId(req.params.roomId, "room id");
+      const memberId = validateId(req.params.memberId, "member id");
+      const result = await this.roomService.getMemberCharacter(roomId, memberId, accountId);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   listMembers = async (req, res, next) => {
     this.setServiceErrorMessage(res);
     try {

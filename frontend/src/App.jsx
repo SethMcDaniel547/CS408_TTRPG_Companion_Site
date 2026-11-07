@@ -1,8 +1,10 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+﻿import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { CharacterProvider } from "./context/CharacterContext.jsx";
 import { RoomProvider } from "./context/RoomContext.jsx";
 import Layout from "./components/Layout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import SidebarLayout from "./components/SidebarLayout.jsx";
 import RequireRoom from "./components/RequireRoom.jsx";
 import WideLayoutEffect from "./components/WideLayoutEffect.jsx";
 import Home from "./pages/Home.jsx";
@@ -16,7 +18,7 @@ import Notes from "./pages/Notes.jsx";
 
 // Route table, mirroring the old route() dispatcher:
 //   public:  /, /signin, /signup
-//   app:     /account, /character, /room, /room-settings, /notes  (auth-gated)
+//   app:     /lobby, /characters, /room, /room-settings, /notes  (auth-gated)
 //   /room and /room-settings additionally require an active room;
 //   /room-settings requires the GM.
 // Unknown paths fall back to the landing page, as the old code did.
@@ -24,6 +26,7 @@ export default function App() {
   return (
     <AuthProvider>
       <RoomProvider>
+        <CharacterProvider>
         <WideLayoutEffect />
         <Routes>
           <Route element={<Layout />}>
@@ -32,21 +35,27 @@ export default function App() {
             <Route path="/signup" element={<SignUp />} />
 
             <Route element={<ProtectedRoute />}>
-              <Route path="/account" element={<Lobby />} />
-              <Route path="/character" element={<Character />} />
+              <Route path="/lobby" element={<Lobby />} />
+              <Route element={<SidebarLayout />}>
+                <Route path="/characters" element={<Character />} />
+                <Route path="/notes" element={<Notes />} />
+              </Route>
               <Route element={<RequireRoom />}>
                 <Route path="/room" element={<Room />} />
               </Route>
               <Route element={<RequireRoom gmOnly />}>
                 <Route path="/room-settings" element={<RoomSettings />} />
               </Route>
-              <Route path="/notes" element={<Notes />} />
             </Route>
+            <Route path="/account" element={<Navigate to="/lobby" replace />} />
+            <Route path="/character" element={<Navigate to="/characters" replace />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
+      </CharacterProvider>
       </RoomProvider>
     </AuthProvider>
   );
 }
+

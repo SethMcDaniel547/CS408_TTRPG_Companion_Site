@@ -73,6 +73,18 @@ function validateCharacter(body) {
   return { name, info };
 }
 
+function validateNote(body) {
+  const title = asString(body.title).trim();
+  const text = asString(body.body);
+  if (title.length < 1 || title.length > 120) {
+    throw new AppError("Note title must be 1-120 characters.", 400);
+  }
+  if (text.length > 20000) {
+    throw new AppError("Notes must be 20000 characters or fewer.", 400);
+  }
+  return { title, body: text };
+}
+
 const TOKEN_MAX_BYTES = 2 * 1024 * 1024;
 
 // Detects the real image type from magic bytes rather than trusting the
@@ -114,6 +126,7 @@ function validateTokenImage(body) {
 module.exports = {
   TOKEN_MAX_BYTES,
   validateCharacter,
+  validateNote,
   validateTokenImage,
   validateCredentials,
   validateRoomName,

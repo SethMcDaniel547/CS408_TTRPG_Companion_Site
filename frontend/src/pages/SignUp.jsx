@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Api } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -18,7 +18,7 @@ export default function SignUp() {
     try {
       await Api.signup(data);
       await refresh();
-      navigate("/account");
+      navigate("/lobby");
     } catch (error) {
       setMessage(error.message);
     } finally {
@@ -68,3 +68,4 @@ export default function SignUp() {
     </section>
   );
 }
+
