@@ -211,7 +211,7 @@ describe("character endpoints", () => {
     const res = await agent.get("/api/rooms/5/roster");
     expect(res.status).toBe(200);
     expect(res.body.players).toEqual([
-      { accountId: 1, isSelf: true, characterId: 3, name: "Nyx", tokenUrl: "/api/characters/3/token?v=1" },
+      { accountId: 1, isSelf: true, characterId: 3, name: "Nyx", statusText: "", grayedOut: false, present: false, tokenUrl: "/api/characters/3/token?v=1" },
     ]);
   });
 });

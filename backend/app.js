@@ -16,6 +16,7 @@ const { NoteRepository } = require("./repositories/NoteRepository");
 const { NoteService } = require("./services/NoteService");
 const { NoteController } = require("./controllers/NoteController");
 const { createNoteRouter } = require("./routes/noteRoutes");
+const { PresenceTracker } = require("./services/PresenceTracker");
 const { SessionStore } = require("./services/SessionStore");
 const { AuthService } = require("./services/AuthService");
 const { RoomService } = require("./services/RoomService");
@@ -47,13 +48,14 @@ function createApp({ pool, config, logger = console }) {
   const noteRepo = new NoteRepository(pool);
 
   // Services (domain layer) — no HTTP, no SQL.
+  const presence = new PresenceTracker();
   const sessionStore = new SessionStore({ durationMs: config.sessionDurationMs });
   const crypto = {
     hash: (value, rounds) => bcrypt.hash(value, rounds),
     compare: (value, hash) => bcrypt.compare(value, hash),
   };
   const authService = new AuthService(accountRepo, crypto, sessionStore);
-  const roomService = new RoomService(roomRepo, memberRepo, accountRepo, characterRepo, noteRepo);
+  const roomService = new RoomService(roomRepo, memberRepo, accountRepo, characterRepo, noteRepo, presence);
   const characterService = new CharacterService(characterRepo, accountRepo);
   const noteService = new NoteService(noteRepo, characterRepo, accountRepo);
 
@@ -109,7 +111,7 @@ function createApp({ pool, config, logger = console }) {
   // Single global error middleware — maps typed errors to HTTP responses.
   app.use(errorHandler(logger));
 
-  return { app, ensureSchema };
+  return { app, ensureSchema, authService, roomService, presence };
 }
 
 module.exports = { createApp };

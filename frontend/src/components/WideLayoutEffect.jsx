@@ -1,4 +1,4 @@
-﻿import { useEffect } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 // The original stylesheet widened .page-content for the multi-panel views using
@@ -19,7 +19,8 @@ export default function WideLayoutEffect() {
 
   useEffect(() => {
     if (WIDE_ROUTES.has(pathname)) {
-      document.body.setAttribute("data-wide", "");
+      // The game room gets the widest canvas (whiteboard + player sidebar).
+      document.body.setAttribute("data-wide", pathname === "/room" ? "board" : "");
     } else {
       document.body.removeAttribute("data-wide");
     }

@@ -85,6 +85,23 @@ function validateNote(body) {
   return { title, body: text };
 }
 
+function validateStatusUpdate(body) {
+  const update = {};
+  if (body?.statusText !== undefined) {
+    if (typeof body.statusText !== "string" || body.statusText.length > 100) {
+      throw new AppError("Status must be 100 characters or fewer.", 400);
+    }
+    update.statusText = body.statusText;
+  }
+  if (body?.grayedOut !== undefined) {
+    if (typeof body.grayedOut !== "boolean") {
+      throw new AppError("Invalid gray-out value.", 400);
+    }
+    update.grayedOut = body.grayedOut;
+  }
+  return update;
+}
+
 const TOKEN_MAX_BYTES = 2 * 1024 * 1024;
 
 // Detects the real image type from magic bytes rather than trusting the
@@ -127,6 +144,7 @@ module.exports = {
   TOKEN_MAX_BYTES,
   validateCharacter,
   validateNote,
+  validateStatusUpdate,
   validateTokenImage,
   validateCredentials,
   validateRoomName,

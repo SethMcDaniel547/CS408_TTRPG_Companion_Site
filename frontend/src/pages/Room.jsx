@@ -1,6 +1,7 @@
-﻿import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Api } from "../api.js";
+import { connectRoomSocket, emitWithAck } from "../socket.js";
 import { useRoom } from "../context/RoomContext.jsx";
 import PlayerGrid from "../components/PlayerGrid.jsx";
 import Whiteboard from "../components/placeholders/Whiteboard.jsx";
@@ -17,6 +18,8 @@ export default function Room() {
 
   const [players, setPlayers] = useState([]);
   const [rosterMessage, setRosterMessage] = useState("");
+
+  const socketRef = useRef(null);
 
   const isGm = Boolean(activeRoom?.isGm);
 
@@ -37,6 +40,47 @@ export default function Room() {
     const timer = setInterval(loadRoster, 10000);
     return () => clearInterval(timer);
   }, [loadRoster]);
+
+  // Live updates: join the room channel (marks this player present), reload the
+  // roster once joined, and merge per-player changes pushed by the server.
+  useEffect(() => {
+    if (!activeRoom) return undefined;
+    const socket = connectRoomSocket();
+    socketRef.current = socket;
+
+    const join = () => {
+      emitWithAck(socket, "room:join", { roomId: activeRoom.id })
+        .then(loadRoster)
+        .catch((error) => setRosterMessage(error.message));
+    };
+    const onUpdate = ({ accountId, ...changes }) => {
+      setPlayers((current) =>
+        current.map((player) => (player.accountId === accountId ? { ...player, ...changes } : player)),
+      );
+    };
+
+    socket.on("connect", join);
+    socket.on("player:update", onUpdate);
+    return () => {
+      socketRef.current = null;
+      socket.disconnect();
+    };
+  }, [activeRoom, loadRoster]);
+
+  // Saves the player's own status; shown immediately, then confirmed by the server.
+  const handleStatusChange = useCallback(
+    (changes) => {
+      const socket = socketRef.current;
+      if (!socket || !activeRoom) return;
+      setPlayers((current) =>
+        current.map((player) => (player.isSelf ? { ...player, ...changes } : player)),
+      );
+      emitWithAck(socket, "status:update", { roomId: activeRoom.id, ...changes })
+        .then(() => setRosterMessage(""))
+        .catch((error) => setRosterMessage(error.message));
+    },
+    [activeRoom],
+  );
 
   async function handleDeleteRoom() {
     if (!activeRoom) return;
@@ -75,7 +119,7 @@ export default function Room() {
       <aside className="board-sidebar" aria-label="Room tools">
         <div className="sidebar-box">
           <h2>Players</h2>
-          <PlayerGrid players={players} />
+          <PlayerGrid players={players} onStatusChange={handleStatusChange} />
           <p className="form-message" role="status" aria-live="polite">
             {rosterMessage}
           </p>

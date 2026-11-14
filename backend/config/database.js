@@ -83,6 +83,13 @@ function createSchemaInitializer(pool) {
         await pool.query(
           "ALTER TABLE room_members ADD COLUMN IF NOT EXISTS character_id INTEGER REFERENCES characters(id) ON DELETE SET NULL",
         );
+        // Player status shown on the room grid (free text and a manual gray-out).
+        await pool.query(
+          "ALTER TABLE room_members ADD COLUMN IF NOT EXISTS status_text VARCHAR(100) NOT NULL DEFAULT ''",
+        );
+        await pool.query(
+          "ALTER TABLE room_members ADD COLUMN IF NOT EXISTS grayed_out BOOLEAN NOT NULL DEFAULT false",
+        );
         await pool.query(`
           CREATE TABLE IF NOT EXISTS notes (
             id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

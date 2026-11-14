@@ -64,10 +64,23 @@ class MemberRepository {
     );
   }
 
+  // Updates only the provided fields (null leaves a field unchanged).
+  async updateStatus(roomId, accountId, { statusText = null, grayedOut = null }, client = this.pool) {
+    const { rows } = await client.query(
+      `UPDATE room_members
+          SET status_text = COALESCE($3, status_text),
+              grayed_out = COALESCE($4, grayed_out)
+        WHERE room_id = $1 AND account_id = $2
+        RETURNING status_text, grayed_out`,
+      [roomId, accountId, statusText, grayedOut],
+    );
+    return rows[0] || null;
+  }
+
   // Roster for the in-room player grid: character details only, no usernames.
   async listRoster(roomId, client = this.pool) {
     const { rows } = await client.query(
-      `SELECT m.account_id, c.id AS character_id, c.name,
+      `SELECT m.account_id, c.id AS character_id, c.name, m.status_text, m.grayed_out,
               (c.token_data IS NOT NULL) AS has_token, c.updated_at
          FROM room_members m
          LEFT JOIN characters c ON c.id = m.character_id

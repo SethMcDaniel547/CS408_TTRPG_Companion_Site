@@ -122,7 +122,7 @@ describe("RoomService roster and character selection", () => {
     const { service } = makeRoomService();
     const roster = await service.getRoster(5, 2);
     expect(roster).toEqual([
-      { accountId: 2, isSelf: true, characterId: 4, name: "Nyx", tokenUrl: null },
+      { accountId: 2, isSelf: true, characterId: 4, name: "Nyx", statusText: "", grayedOut: false, present: false, tokenUrl: null },
     ]);
   });
 

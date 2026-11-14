@@ -10,13 +10,21 @@ const { createApp } = require("./app");
 
 const config = loadConfig();
 const pool = createPool(config);
-const { app, ensureSchema } = createApp({ pool, config });
+const { attachRoomSocket } = require("./realtime/roomSocket");
+
+const { app, ensureSchema, authService, roomService, presence } = createApp({ pool, config });
 
 const server = app.listen(config.port, config.host, () => {
   console.log(`TTRPG Companion listening on ${config.host}:${config.port}`);
   ensureSchema().catch((error) => {
     console.error("Database initialization failed:", error.message);
   });
+});
+attachRoomSocket(server, {
+  authService,
+  roomService,
+  presence,
+  cookieName: config.sessionCookieName,
 });
 
 function shutdown() {

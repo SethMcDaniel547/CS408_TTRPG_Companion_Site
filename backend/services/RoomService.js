@@ -8,7 +8,8 @@ const ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // Business rules for rooms and membership. No req/res, no raw SQL, no driver
 // imports. Repositories are injected via the constructor.
 class RoomService {
-  constructor(roomRepo, memberRepo, accountRepo, characterRepo, noteRepo) {
+  constructor(roomRepo, memberRepo, accountRepo, characterRepo, noteRepo, presence = null) {
+    this.presence = presence;
     this.roomRepo = roomRepo;
     this.memberRepo = memberRepo;
     this.accountRepo = accountRepo;
@@ -66,10 +67,31 @@ class RoomService {
       isSelf: row.account_id === accountId,
       characterId: row.character_id,
       name: row.name,
+      statusText: row.status_text || "",
+      grayedOut: Boolean(row.grayed_out),
+      present: this.presence ? this.presence.isPresent(roomId, row.account_id) : false,
       tokenUrl: row.has_token
         ? `/api/characters/${row.character_id}/token?v=${new Date(row.updated_at).getTime()}`
         : null,
     }));
+  }
+
+  // Who the caller is in a room they can access: { isGm }.
+  async getAccess(roomId, accountId) {
+    const room = await this.requireRoomAccess(roomId, accountId);
+    return { isGm: room.gm === accountId };
+  }
+
+  // Saves a player's own status. The GM has no player card, so returns null.
+  async updateStatus(roomId, accountId, { statusText, grayedOut }) {
+    const room = await this.requireRoomAccess(roomId, accountId);
+    if (room.gm === accountId) return null;
+    const row = await this.memberRepo.updateStatus(roomId, accountId, {
+      statusText: statusText ?? null,
+      grayedOut: grayedOut ?? null,
+    });
+    if (!row) throw new AppError("You are not in this room.", 403);
+    return { statusText: row.status_text, grayedOut: row.grayed_out };
   }
 
   // Records which of the caller's characters they play in this room. The GM

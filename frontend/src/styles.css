@@ -102,15 +102,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .sidebar-sub details > summary { cursor: pointer; padding: .2rem 0; }
 .sidebar-empty { color: var(--muted-text-color); font-size: .85rem; }
 .note-results { display: grid; gap: .25rem; list-style: none; margin: 0; padding: 0; }
-.player-grid { display: grid; gap: .6rem; grid-template-columns: repeat(2, minmax(0, 1fr)); list-style: none; margin: 0; padding: 0; }
+.player-grid { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); list-style: none; margin: 0; padding: 0; }
 .member-select { background: none; border: 0; color: var(--text-color); cursor: pointer; font: inherit; padding: .2rem 0; text-align: left; }
 .member-select[aria-pressed="true"] { color: var(--primary-color); font-weight: 700; }
 .character-info, .note-view { overflow-wrap: anywhere; white-space: pre-wrap; }
 .note-view { background: var(--page-background); border: .1rem solid var(--border-color); border-radius: .4rem; font: inherit; margin: 0; padding: .75rem; }
-.player-card { align-items: center; background: var(--surface-color); border: .1rem solid var(--border-color); border-radius: .5rem; display: grid; gap: .25rem; justify-items: center; padding: .6rem .4rem; text-align: center; }
-.player-token { align-items: center; background: var(--page-background); border-radius: .5rem; display: flex; height: 4rem; justify-content: center; overflow: hidden; width: 4rem; }
-.player-token .token-placeholder { font-size: 1.5rem; }
-.player-name { font-weight: 700; overflow-wrap: anywhere; }
+.player-card { align-items: center; background: var(--surface-color); border: .1rem solid var(--border-color); border-radius: .5rem; display: grid; gap: .3rem; justify-items: center; padding: 1.9rem .5rem .7rem; position: relative; text-align: center; }
+.player-token { align-items: center; background: var(--page-background); border-radius: .5rem; display: flex; height: 5.5rem; justify-content: center; overflow: hidden; width: 5.5rem; }
+.player-token .token-placeholder { font-size: 2.25rem; }
+.player-name { font-size: .9rem; font-weight: 700; overflow-wrap: anywhere; }
 .player-status { color: var(--muted-text-color); font-size: .8rem; }
 .token-box input[type="file"] { font-size: .7rem; max-width: 6rem; }
 .stacked-form { display: grid; gap: .5rem; }
@@ -149,6 +149,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (min-width: 60rem) {
   body[data-wide] .page-content { max-width: 72rem; }
 }
+/* Game room: use most of a large screen, capped so ultrawide stays readable. */
+@media (min-width: 80rem) {
+  body[data-wide="board"] .page-content { max-width: min(112rem, 94vw); }
+  body[data-wide="board"] .room-board-view { grid-template-columns: 1fr 26rem; }
+}
+@media (min-width: 110rem) {
+  body[data-wide="board"] .room-board-view { grid-template-columns: 1fr 32rem; }
+}
 
 @media (max-width: 52rem) {
   .split-view, .room-board-view { grid-template-columns: 1fr; }
@@ -158,3 +166,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .page-content { padding: 1rem; }
   .brand { font-size: .95rem; }
 }
+
+/* Gray-out dims the character, not the icons, so the owner can still toggle it. */
+.player-card-gray .player-token, .player-card-gray .player-name, .player-card-gray .player-status, .player-card-gray .player-status-input { filter: grayscale(1); opacity: .45; }
+.player-status-input { background: transparent; border: .1rem solid transparent; border-radius: .25rem; color: var(--text-color); font: inherit; font-size: .8rem; max-width: 100%; padding: .15rem .3rem; text-align: center; width: 100%; }
+.player-status-input:hover, .player-status-input:focus { background: var(--page-background); border-color: var(--muted-text-color); }
+.player-away { font-style: italic; }
+.card-icon { align-items: center; background: none; border: 0; border-radius: .35rem; color: var(--muted-text-color); cursor: pointer; display: inline-flex; height: 1.75rem; justify-content: center; padding: 0; position: absolute; top: .3rem; width: 1.75rem; }
+.card-icon:hover, .card-icon:focus-visible { background: var(--page-background); color: var(--text-color); }
+.card-icon-left { left: .3rem; }
+.card-icon-right { right: .3rem; }
+.card-icon-active, .card-icon-active:hover { color: var(--primary-color); filter: drop-shadow(0 0 .3rem var(--primary-color)); }
