@@ -6,7 +6,7 @@ import { useRoom } from "../context/RoomContext.jsx";
 import PlayerGrid from "../components/PlayerGrid.jsx";
 import Whiteboard from "../components/placeholders/Whiteboard.jsx";
 import DrawingTools from "../components/placeholders/DrawingTools.jsx";
-import PassingNotes from "../components/placeholders/PassingNotes.jsx";
+import PassingNotes from "../components/PassingNotes.jsx";
 
 // Game room, player + GM view (views 5 & 7). Shows a grid of the characters
 // being played in the room (token, character name, status). Adding and removing
@@ -20,6 +20,7 @@ export default function Room() {
   const [rosterMessage, setRosterMessage] = useState("");
 
   const socketRef = useRef(null);
+  const [socket, setSocket] = useState(null);
 
   const isGm = Boolean(activeRoom?.isGm);
 
@@ -47,6 +48,7 @@ export default function Room() {
     if (!activeRoom) return undefined;
     const socket = connectRoomSocket();
     socketRef.current = socket;
+    setSocket(socket);
 
     const join = () => {
       emitWithAck(socket, "room:join", { roomId: activeRoom.id })
@@ -63,6 +65,7 @@ export default function Room() {
     socket.on("player:update", onUpdate);
     return () => {
       socketRef.current = null;
+      setSocket(null);
       socket.disconnect();
     };
   }, [activeRoom, loadRoster]);
@@ -106,7 +109,7 @@ export default function Room() {
             <span>{isGm ? "Game Master" : "Player"}</span>
             {isGm && (
               <>
-                {" · "}
+                {" Â· "}
                 <code>{activeRoom.roomCode}</code>
               </>
             )}
@@ -124,7 +127,7 @@ export default function Room() {
             {rosterMessage}
           </p>
         </div>
-        <PassingNotes />
+        <PassingNotes socket={socket} roomId={activeRoom.id} players={players} />
 
         {isGm && (
           <div className="sidebar-box">

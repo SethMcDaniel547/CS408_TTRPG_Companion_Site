@@ -86,6 +86,8 @@ export default function PlayerGrid({ players, onStatusChange }) {
           <li
             className={`player-card${dimmed ? " player-card-gray" : ""}`}
             key={player.accountId}
+            data-note-drop={player.isSelf ? undefined : "player"}
+            data-account-id={player.isSelf ? undefined : player.accountId}
           >
             {player.isSelf && (
               <>

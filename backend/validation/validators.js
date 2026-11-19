@@ -102,6 +102,23 @@ function validateStatusUpdate(body) {
   return update;
 }
 
+const PASSED_NOTE_MAX_LENGTH = 1000;
+
+// A note passed live between players. Never persisted; text only.
+function validateNotePass(body) {
+  const toAccountId = Number.parseInt(body?.toAccountId, 10);
+  if (!Number.isInteger(toAccountId) || toAccountId < 1) {
+    throw new AppError("Choose a player to pass the note to.", 400);
+  }
+  if (typeof body?.text !== "string" || body.text.trim() === "") {
+    throw new AppError("A note cannot be empty.", 400);
+  }
+  if (body.text.length > PASSED_NOTE_MAX_LENGTH) {
+    throw new AppError("Passed notes must be 1000 characters or fewer.", 400);
+  }
+  return { toAccountId, text: body.text };
+}
+
 const TOKEN_MAX_BYTES = 2 * 1024 * 1024;
 
 // Detects the real image type from magic bytes rather than trusting the
@@ -145,6 +162,7 @@ module.exports = {
   validateCharacter,
   validateNote,
   validateStatusUpdate,
+  validateNotePass,
   validateTokenImage,
   validateCredentials,
   validateRoomName,

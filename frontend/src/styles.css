@@ -177,3 +177,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .card-icon-left { left: .3rem; }
 .card-icon-right { right: .3rem; }
 .card-icon-active, .card-icon-active:hover { color: var(--primary-color); filter: drop-shadow(0 0 .3rem var(--primary-color)); }
+
+/* Passing notes: physics balls live in a fixed layer over the whole viewport. */
+.note-ball-layer { inset: 0; overflow: hidden; pointer-events: none; position: fixed; z-index: 60; }
+.note-ball { background: radial-gradient(circle at 35% 30%, #fffaf0, #e3d2b0 60%, #b9a47c); border-radius: 50%; box-shadow: 0 .15rem .4rem rgba(0, 0, 0, .5); cursor: grab; left: 0; pointer-events: auto; position: absolute; top: 0; touch-action: none; user-select: none; will-change: transform; }
+.note-ball-dragging { cursor: grabbing; }
+.note-save-zone { align-items: center; background: var(--surface-raised); border: .15rem dashed var(--primary-color); border-radius: .5rem 0 0 .5rem; color: var(--text-color); display: flex; height: 9rem; justify-content: center; opacity: 0; pointer-events: none; position: fixed; right: 0; text-align: center; top: 50%; transform: translateY(-50%); transition: opacity .15s; width: 5rem; z-index: 55; }
+.note-save-zone-active { opacity: .95; pointer-events: auto; }
