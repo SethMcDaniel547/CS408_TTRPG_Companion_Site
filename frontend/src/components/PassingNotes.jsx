@@ -30,7 +30,7 @@ function titleFor(text) {
 // from the top of their screen), onto the note area to read or edit it, or onto
 // the Save zone to keep it on the notes page. Passed notes go over the room
 // socket to the recipient only; the GM never receives them.
-export default function PassingNotes({ socket, roomId, players }) {
+export default function PassingNotes({ socket, roomId, players, onNoteSent }) {
   const { setNotes } = useCharacters();
   const [draft, setDraft] = useState("");
   const [message, setMessage] = useState("");
@@ -61,7 +61,7 @@ export default function PassingNotes({ socket, roomId, players }) {
   async function sendNote(ball, player) {
     try {
       await emitWithAck(socket, "note:pass", { roomId, toAccountId: player.accountId, text: ball.text });
-      setMessage(`Note passed to ${player.name || "a player"}.`);
+      onNoteSent?.(player.accountId);
     } catch (error) {
       setMessage(error.message);
       addBall(ball.text);
@@ -106,6 +106,8 @@ export default function PassingNotes({ socket, roomId, players }) {
       return true;
     }
 
+    if (target.kind === "trash") return true;
+
     if (target.kind === "save") {
       const characterId = players.find((p) => p.isSelf)?.characterId;
       if (!characterId) {
@@ -129,15 +131,8 @@ export default function PassingNotes({ socket, roomId, players }) {
 
   return (
     <div className={`sidebar-box${dragging ? " note-drop-target" : ""}`} data-note-drop="editor">
-      {dragging ? (
-        <h2 className="note-open-label">Open note</h2>
-      ) : (
-        <>
+      {dragging && <div className="note-open-overlay">Open note</div>}
       <h2>Passing notes</h2>
-      <p className="sidebar-help">
-        Write a note and press Done. Drag the paper ball onto a player to pass it, back here to read
-        or edit it, or onto Save note to keep it.
-      </p>
       <textarea
         className="note-input"
         rows="4"
@@ -158,8 +153,6 @@ export default function PassingNotes({ socket, roomId, players }) {
       <Link className="button button-small button-secondary" to="/notes" state={{ fromRoom: true }}>
         View all notes
       </Link>
-        </>
-      )}
 
       {createPortal(
         <>
@@ -185,6 +178,16 @@ export default function PassingNotes({ socket, roomId, players }) {
             aria-hidden={!dragging}
           >
             Save note
+          </div>
+          <div
+            className={`note-save-zone note-trash-zone${dragging ? " note-save-zone-active" : ""}`}
+            data-note-drop="trash"
+            aria-hidden={!dragging}
+          >
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
+              <path d="M9 3h6l1 1h4v2H4V4h4l1-1Zm-3 5h12l-1 12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 8Zm4 2v9h1.5v-9H10Zm3.5 0v9H15v-9h-1.5Z" />
+            </svg>
+            Delete
           </div>
         </>,
         document.body,

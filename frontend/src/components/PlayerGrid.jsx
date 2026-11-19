@@ -72,7 +72,7 @@ function SelfStatus({ player, onStatusChange }) {
 // Grid of the characters being played in a room: token, character name, and a
 // status line underneath. Real usernames are intentionally not shown. A card is
 // grayed out when its player chose to gray it or is not currently in the room.
-export default function PlayerGrid({ players, onStatusChange }) {
+export default function PlayerGrid({ players, onStatusChange, noteSentTo = null }) {
   if (!players || players.length === 0) {
     return <p className="room-empty">No players yet.</p>;
   }
@@ -111,6 +111,11 @@ export default function PlayerGrid({ players, onStatusChange }) {
                   <GearIcon />
                 </Link>
               </>
+            )}
+            {noteSentTo === player.accountId && (
+              <span className="note-sent-label" role="status">
+                Note sent
+              </span>
             )}
             <div className="player-token">
               {player.tokenUrl ? (

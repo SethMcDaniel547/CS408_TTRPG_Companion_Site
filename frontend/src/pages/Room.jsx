@@ -21,6 +21,16 @@ export default function Room() {
 
   const socketRef = useRef(null);
   const [socket, setSocket] = useState(null);
+  const [noteSentTo, setNoteSentTo] = useState(null);
+  const sentTimer = useRef(null);
+
+  // Briefly labels the recipient's card "Note sent".
+  const handleNoteSent = useCallback((accountId) => {
+    clearTimeout(sentTimer.current);
+    setNoteSentTo(accountId);
+    sentTimer.current = setTimeout(() => setNoteSentTo(null), 1600);
+  }, []);
+  useEffect(() => () => clearTimeout(sentTimer.current), []);
 
   const isGm = Boolean(activeRoom?.isGm);
 
@@ -122,12 +132,12 @@ export default function Room() {
       <aside className="board-sidebar" aria-label="Room tools">
         <div className="sidebar-box">
           <h2>Players</h2>
-          <PlayerGrid players={players} onStatusChange={handleStatusChange} />
+          <PlayerGrid players={players} onStatusChange={handleStatusChange} noteSentTo={noteSentTo} />
           <p className="form-message" role="status" aria-live="polite">
             {rosterMessage}
           </p>
         </div>
-        <PassingNotes socket={socket} roomId={activeRoom.id} players={players} />
+        <PassingNotes socket={socket} roomId={activeRoom.id} players={players} onNoteSent={handleNoteSent} />
 
         {isGm && (
           <div className="sidebar-box">

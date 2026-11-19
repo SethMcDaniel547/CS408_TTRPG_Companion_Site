@@ -180,9 +180,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* Passing notes: physics balls live in a fixed layer over the whole viewport. */
 .note-ball-layer { inset: 0; overflow: hidden; pointer-events: none; position: fixed; z-index: 60; }
-.note-ball { background: radial-gradient(circle at 35% 30%, #fffaf0, #e3d2b0 60%, #b9a47c); border-radius: 50%; box-shadow: 0 .15rem .4rem rgba(0, 0, 0, .5); cursor: grab; left: 0; pointer-events: auto; position: absolute; top: 0; touch-action: none; user-select: none; will-change: transform; }
+.note-ball { background: url("./assets/paper-ball.png") center / cover no-repeat; border-radius: 50%; filter: drop-shadow(0 .15rem .25rem rgba(0, 0, 0, .5)); cursor: grab; left: 0; pointer-events: auto; position: absolute; top: 0; touch-action: none; user-select: none; will-change: transform; }
 .note-ball-dragging { cursor: grabbing; }
-.note-save-zone { align-items: center; background: var(--surface-raised); border: .15rem dashed var(--primary-color); border-radius: .5rem 0 0 .5rem; color: var(--text-color); display: flex; height: 9rem; justify-content: center; opacity: 0; pointer-events: none; position: fixed; right: 0; text-align: center; top: 50%; transform: translateY(-50%); transition: opacity .15s; width: 5rem; z-index: 55; }
+.note-save-zone { align-items: center; background: var(--surface-raised); border: .15rem dashed var(--primary-color); border-radius: .5rem 0 0 .5rem; color: var(--text-color); display: flex; flex-direction: column; gap: .4rem; height: 50vh; justify-content: center; opacity: 0; pointer-events: none; position: fixed; right: 0; text-align: center; top: 6vh; transition: opacity .15s; width: 5rem; z-index: 55; }
+.note-trash-zone { height: 24vh; top: calc(6vh + 50vh + .75rem); }
 .note-save-zone-active { opacity: .95; pointer-events: auto; }
-.note-dragging .note-drop-target, .note-dragging .player-card[data-note-valid="true"] { border: .15rem dashed var(--primary-color); }
-.note-open-label { align-items: center; display: flex; justify-content: center; min-height: 8rem; }
+/* Outlines, not borders, so highlighting never changes layout size. */
+.note-dragging .note-drop-target, .note-dragging .player-card[data-note-valid="true"] { outline: .15rem dashed var(--primary-color); outline-offset: -.1rem; }
+.note-drop-target { position: relative; }
+.note-drop-target > :not(.note-open-overlay) { visibility: hidden; }
+.note-open-overlay { align-items: center; display: flex; font-size: 1.25rem; font-weight: 700; inset: 0; justify-content: center; position: absolute; }
+.note-sent-label { animation: note-sent 1.6s ease-out forwards; background: var(--primary-color); border-radius: .3rem; color: var(--button-text-color); font-size: .8rem; font-weight: 700; left: 50%; padding: .2rem .5rem; pointer-events: none; position: absolute; top: 50%; transform: translate(-50%, -50%); white-space: nowrap; z-index: 2; }
+@keyframes note-sent { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
