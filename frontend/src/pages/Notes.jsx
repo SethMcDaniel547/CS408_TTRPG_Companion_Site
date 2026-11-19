@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Api } from "../api.js";
 import { useCharacters } from "../context/CharacterContext.jsx";
 
@@ -10,6 +10,8 @@ export default function Notes() {
   const { characters, notes, setNotes, loading } = useCharacters();
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  // Set by the room's "View all notes" link; kept while this page stays mounted.
+  const [fromRoom] = useState(Boolean(useLocation().state?.fromRoom));
 
   const noteId = Number.parseInt(params.get("note"), 10);
   const newFor = Number.parseInt(params.get("newFor"), 10);
@@ -89,6 +91,11 @@ export default function Notes() {
               ? `New note for ${draftCharacter.name || "Unnamed"}`
               : "Notes"}
         </h1>
+        {fromRoom && (
+          <Link className="button button-small button-secondary" to="/room">
+            Return to room
+          </Link>
+        )}
       </div>
 
       <label className="visually-hidden" htmlFor="notes-search">

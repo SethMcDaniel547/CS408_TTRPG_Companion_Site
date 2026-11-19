@@ -184,3 +184,5 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .note-ball-dragging { cursor: grabbing; }
 .note-save-zone { align-items: center; background: var(--surface-raised); border: .15rem dashed var(--primary-color); border-radius: .5rem 0 0 .5rem; color: var(--text-color); display: flex; height: 9rem; justify-content: center; opacity: 0; pointer-events: none; position: fixed; right: 0; text-align: center; top: 50%; transform: translateY(-50%); transition: opacity .15s; width: 5rem; z-index: 55; }
 .note-save-zone-active { opacity: .95; pointer-events: auto; }
+.note-dragging .note-drop-target, .note-dragging .player-card[data-note-valid="true"] { border: .15rem dashed var(--primary-color); }
+.note-open-label { align-items: center; display: flex; justify-content: center; min-height: 8rem; }

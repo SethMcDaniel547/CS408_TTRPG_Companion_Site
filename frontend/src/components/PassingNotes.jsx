@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { Api } from "../api.js";
 import { emitWithAck } from "../socket.js";
@@ -120,8 +121,18 @@ export default function PassingNotes({ socket, roomId, players }) {
 
   const dragging = physics.draggingId !== null;
 
+  // Lets CSS highlight the valid player cards while a ball is being dragged.
+  useEffect(() => {
+    document.body.classList.toggle("note-dragging", dragging);
+    return () => document.body.classList.remove("note-dragging");
+  }, [dragging]);
+
   return (
-    <div className="sidebar-box" data-note-drop="editor">
+    <div className={`sidebar-box${dragging ? " note-drop-target" : ""}`} data-note-drop="editor">
+      {dragging ? (
+        <h2 className="note-open-label">Open note</h2>
+      ) : (
+        <>
       <h2>Passing notes</h2>
       <p className="sidebar-help">
         Write a note and press Done. Drag the paper ball onto a player to pass it, back here to read
@@ -144,6 +155,11 @@ export default function PassingNotes({ socket, roomId, players }) {
       <p className="form-message" role="status" aria-live="polite">
         {message}
       </p>
+      <Link className="button button-small button-secondary" to="/notes" state={{ fromRoom: true }}>
+        View all notes
+      </Link>
+        </>
+      )}
 
       {createPortal(
         <>

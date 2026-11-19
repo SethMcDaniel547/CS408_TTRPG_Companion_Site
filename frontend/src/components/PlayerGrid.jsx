@@ -87,6 +87,7 @@ export default function PlayerGrid({ players, onStatusChange }) {
             className={`player-card${dimmed ? " player-card-gray" : ""}`}
             key={player.accountId}
             data-note-drop={player.isSelf ? undefined : "player"}
+            data-note-valid={player.isSelf ? undefined : String(player.present)}
             data-account-id={player.isSelf ? undefined : player.accountId}
           >
             {player.isSelf && (
