@@ -82,21 +82,18 @@ class RoomService {
     return { isGm: room.gm === accountId };
   }
 
-  // Passed notes go player to player only, so the GM can neither send nor
-  // receive them. Throws unless both accounts are other-than-GM members.
+  // Notes can be passed by the GM or any player, to players only. Players'
+  // notes to each other stay out of the GM's sight; the GM has no player card,
+  // so nobody can pass a note to them. Throws if the pass is not allowed.
   async requireNotePassage(roomId, fromAccountId, toAccountId) {
     await this.requireRoomAccess(roomId, fromAccountId);
     if (fromAccountId === toAccountId) {
       throw new AppError("You cannot pass a note to yourself.", 400);
     }
-    if (!(await this.memberRepo.isMember(roomId, fromAccountId))) {
-      throw new AppError("Only players can pass notes.", 403);
-    }
     if (!(await this.memberRepo.isMember(roomId, toAccountId))) {
       throw new AppError("That player is not in this room.", 404);
     }
   }
-
   // Saves a player's own status. The GM has no player card, so returns null.
   async updateStatus(roomId, accountId, { statusText, grayedOut }) {
     const room = await this.requireRoomAccess(roomId, accountId);

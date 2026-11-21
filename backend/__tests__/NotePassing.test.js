@@ -34,8 +34,8 @@ describe("RoomService.requireNotePassage", () => {
     await expect(build().requireNotePassage(5, 2, 2)).rejects.toMatchObject({ statusCode: 400 });
   });
 
-  it("rejects the GM as sender", async () => {
-    await expect(build().requireNotePassage(5, GM, 2)).rejects.toMatchObject({ statusCode: 403 });
+  it("allows the GM to pass a note to a player", async () => {
+    await expect(build().requireNotePassage(5, GM, 2)).resolves.toBeUndefined();
   });
 
   it("rejects the GM as recipient", async () => {

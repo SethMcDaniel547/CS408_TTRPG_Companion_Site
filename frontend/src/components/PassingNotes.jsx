@@ -29,11 +29,18 @@ function titleFor(text) {
 // a physics ball. Drag a ball onto another player's card to send it (it falls in
 // from the top of their screen), onto the note area to read or edit it, or onto
 // the Save zone to keep it on the notes page. Passed notes go over the room
-// socket to the recipient only; the GM never receives them.
+// socket to the recipient only; only players receive them.
 export default function PassingNotes({ socket, roomId, players, onNoteSent }) {
-  const { setNotes } = useCharacters();
+  const { notes, setNotes, activeCharacter } = useCharacters();
   const [draft, setDraft] = useState("");
+  const [writing, setWriting] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
   const [message, setMessage] = useState("");
+
+  // The character being played here (the GM has none, so their active one).
+  const characterId = players.find((p) => p.isSelf)?.characterId ?? activeCharacter?.id ?? null;
+  const characterNotes = notes.filter((note) => note.characterId === characterId);
+  const selected = characterNotes.find((note) => note.id === selectedId) ?? null;
 
   const physics = useNoteBalls({ onDrop: handleDrop });
   const { addBall } = physics;
@@ -56,6 +63,7 @@ export default function PassingNotes({ socket, roomId, players, onNoteSent }) {
     addBall(draft);
     setDraft("");
     setMessage("");
+    setWriting(false);
   }
 
   async function sendNote(ball, player) {
@@ -87,6 +95,8 @@ export default function PassingNotes({ socket, roomId, players, onNoteSent }) {
     if (target.kind === "editor") {
       if (draft.trim()) addBall(draft); // keep whatever was being written
       setDraft(ball.text);
+      setWriting(true);
+      setSelectedId(null);
       setMessage("");
       return true;
     }
@@ -109,9 +119,8 @@ export default function PassingNotes({ socket, roomId, players, onNoteSent }) {
     if (target.kind === "trash") return true;
 
     if (target.kind === "save") {
-      const characterId = players.find((p) => p.isSelf)?.characterId;
       if (!characterId) {
-        setMessage("Choose a character for this room before saving notes.");
+        setMessage("Choose a character before saving notes.");
         return false;
       }
       saveNote(ball, characterId);
@@ -130,30 +139,71 @@ export default function PassingNotes({ socket, roomId, players, onNoteSent }) {
   }, [dragging]);
 
   return (
-    <div className={`sidebar-box${dragging ? " note-drop-target" : ""}`} data-note-drop="editor">
+    <div className={`sidebar-box note-box${dragging ? " note-drop-target" : ""}`} data-note-drop="editor">
       {dragging && <div className="note-open-overlay">Open note</div>}
-      <h2>Passing notes</h2>
-      <textarea
-        className="note-input"
-        rows="4"
-        maxLength={NOTE_MAX_LENGTH}
-        placeholder="Pass a note..."
-        aria-label="Note to pass"
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
-      />
-      <div className="tool-row">
-        <button className="button button-small" type="button" onClick={handleDone}>
-          Done
+      <div className="sidebar-box-header">
+        <h2>{writing ? "Pass a note" : "Notes"}</h2>
+        <button
+          className="icon-button"
+          type="button"
+          aria-label={writing ? "Back to notes" : "Write a note to pass"}
+          title={writing ? "Back to notes" : "Write a note to pass"}
+          onClick={() => {
+            setWriting((current) => !current);
+            setSelectedId(null);
+            setMessage("");
+          }}
+        >
+          {writing ? "\u00d7" : "+"}
         </button>
       </div>
-      <p className="form-message" role="status" aria-live="polite">
+
+      <div className="note-box-body">
+        {writing ? (
+          <div className="note-write">
+            <textarea
+              className="note-input"
+              maxLength={NOTE_MAX_LENGTH}
+              placeholder="Pass a note..."
+              aria-label="Note to pass"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+            />
+            <button className="button button-small" type="button" onClick={handleDone}>
+              Done
+            </button>
+          </div>
+        ) : selected ? (
+          <div className="note-read">
+            <button className="button button-small button-secondary" type="button" onClick={() => setSelectedId(null)}>
+              Back
+            </button>
+            <h3>{selected.title}</h3>
+            <p className="note-read-body">{selected.body}</p>
+          </div>
+        ) : characterNotes.length === 0 ? (
+          <p className="room-empty">
+            {characterId ? "No notes for this character yet." : "Choose a character to see its notes."}
+          </p>
+        ) : (
+          <ul className="note-list">
+            {characterNotes.map((note) => (
+              <li key={note.id}>
+                <button className="note-list-item" type="button" onClick={() => setSelectedId(note.id)}>
+                  {note.title}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <p className="form-message note-box-message" role="status" aria-live="polite">
         {message}
       </p>
       <Link className="button button-small button-secondary" to="/notes" state={{ fromRoom: true }}>
-        View all notes
+        Notes page
       </Link>
-
       {createPortal(
         <>
           <div className="note-ball-layer">
@@ -177,7 +227,7 @@ export default function PassingNotes({ socket, roomId, players, onNoteSent }) {
             data-note-drop="save"
             aria-hidden={!dragging}
           >
-            Save note
+            <span>Save note</span>
           </div>
           <div
             className={`note-save-zone note-trash-zone${dragging ? " note-save-zone-active" : ""}`}
@@ -187,7 +237,7 @@ export default function PassingNotes({ socket, roomId, players, onNoteSent }) {
             <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
               <path d="M9 3h6l1 1h4v2H4V4h4l1-1Zm-3 5h12l-1 12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 8Zm4 2v9h1.5v-9H10Zm3.5 0v9H15v-9h-1.5Z" />
             </svg>
-            Delete
+            <span>Delete</span>
           </div>
         </>,
         document.body,
